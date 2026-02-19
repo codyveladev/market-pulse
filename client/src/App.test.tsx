@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react'
-import { describe, it, expect, vi } from 'vitest'
+import userEvent from '@testing-library/user-event'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import App from './App'
+import { useNavigationStore } from './store/navigationStore'
 
 // Mock the hooks to avoid real fetch calls
 vi.mock('./hooks/useNews', () => ({
@@ -22,6 +24,10 @@ vi.mock('./hooks/useMarketData', () => ({
 }))
 
 describe('App', () => {
+  beforeEach(() => {
+    useNavigationStore.setState({ activeTab: 'news' })
+  })
+
   it('renders the Market Pulse heading', () => {
     render(<App />)
     expect(screen.getByText('Market Pulse')).toBeInTheDocument()
@@ -29,22 +35,46 @@ describe('App', () => {
 
   it('renders the TickerTape section', () => {
     render(<App />)
-    // TickerTape shows loading or quote data
     expect(document.querySelector('[class*="border-b"]')).toBeTruthy()
   })
 
-  it('renders sector selector buttons', () => {
+  it('renders the sidebar with News and Markets tabs', () => {
+    render(<App />)
+    expect(screen.getByRole('button', { name: /News/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Markets/ })).toBeInTheDocument()
+  })
+
+  it('renders sector selector buttons on news tab', () => {
     render(<App />)
     expect(screen.getByRole('button', { name: /Technology/ })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Crypto/ })).toBeInTheDocument()
   })
 
-  it('renders the news feed section', () => {
+  it('renders the news feed section on news tab', () => {
     render(<App />)
     expect(screen.getByText(/News Feed/)).toBeInTheDocument()
   })
 
-  it('renders the refresh button', () => {
+  it('switches to markets view when Markets tab is clicked', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /Markets/ }))
+
+    expect(screen.getByRole('heading', { name: 'Markets' })).toBeInTheDocument()
+    expect(screen.queryByText(/News Feed/)).not.toBeInTheDocument()
+  })
+
+  it('hides sector selector on markets tab', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /Markets/ }))
+
+    expect(screen.queryByRole('button', { name: /Technology/ })).not.toBeInTheDocument()
+  })
+
+  it('renders the refresh button on news tab', () => {
     render(<App />)
     expect(screen.getByRole('button', { name: /Refresh/ })).toBeInTheDocument()
   })

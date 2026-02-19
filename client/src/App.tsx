@@ -1,14 +1,18 @@
 import { TickerTape } from './components/TickerTape'
 import { SectorSelector } from './components/SectorSelector'
 import { NewsFeed } from './components/NewsFeed'
+import { Sidebar } from './components/Sidebar'
+import { MarketOverview } from './components/MarketOverview'
 import { useSectorStore } from './store/sectorStore'
+import { useNavigationStore } from './store/navigationStore'
 
 function App() {
   const { selectedIds } = useSectorStore()
+  const { activeTab } = useNavigationStore()
   const isKiosk = new URLSearchParams(window.location.search).get('kiosk') === 'true'
 
   return (
-    <div className="min-h-screen bg-surface text-white">
+    <div className="min-h-screen bg-surface text-white flex flex-col">
       <TickerTape />
 
       {!isKiosk && (
@@ -19,11 +23,26 @@ function App() {
         </header>
       )}
 
-      {!isKiosk && <SectorSelector />}
+      <div className="flex flex-1">
+        {!isKiosk && <Sidebar />}
 
-      <main className="max-w-4xl mx-auto">
-        <NewsFeed sectors={selectedIds} />
-      </main>
+        <div className="flex-1">
+          {activeTab === 'news' && (
+            <>
+              {!isKiosk && <SectorSelector />}
+              <main className="max-w-4xl mx-auto">
+                <NewsFeed sectors={selectedIds} />
+              </main>
+            </>
+          )}
+
+          {activeTab === 'markets' && (
+            <main className="max-w-5xl mx-auto">
+              <MarketOverview />
+            </main>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

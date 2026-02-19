@@ -84,6 +84,46 @@
   6. App supports `?kiosk=true` URL param (hides header + sector selector)
 - **Test count:** 131 total (82 client + 49 server) — all green
 
+### Sidebar Navigation
+- **Status:** COMPLETE
+- **Files:** `client/src/store/navigationStore.ts` (3 tests), `client/src/components/Sidebar.tsx` (5 tests), `client/src/components/MarketOverview.tsx` (3 tests stub), `client/src/App.tsx` (8 tests)
+- **What:** Vertical sidebar with News/Markets tab switching, MarketOverview stub, conditional SectorSelector visibility
+- **Test count:** 146 total (96 client + 50 server) — all green
+
 ---
 
-*Last updated: Post-phase requirements alignment complete*
+## Phase 9: Markets Tab — Full Implementation
+
+### Step 1: Extend QuoteData + Yahoo Service
+- **Status:** NOT STARTED
+- **Files:** `shared/types.ts`, `server/services/yahoo.ts`, `server/services/__tests__/yahoo.test.ts`
+- **What:** Add `name?`, `dayHigh?`, `dayLow?` to QuoteData; parse from Yahoo v8 chart `meta` (already fetched, just not extracted)
+
+### Step 2: Market Categories Constant
+- **Status:** NOT STARTED
+- **Files:** `client/src/constants/marketCategories.ts`
+- **What:** Define 12 filterable categories: Indices (SPY, QQQ, DIA, IWM), Mag 7 (AAPL, MSFT, NVDA, GOOGL, AMZN, META, TSLA), plus 10 sector stock groups from existing `SECTORS`
+
+### Step 3: useMarketQuotes Hook
+- **Status:** NOT STARTED
+- **Files:** `client/src/hooks/useMarketQuotes.ts`, `client/src/hooks/__tests__/useMarketQuotes.test.ts`
+- **What:** Parameterized fetch hook — accepts `symbols[]`, calls `/api/quotes?symbols=...`, 60s auto-refresh
+
+### Step 4: MarketCard Component
+- **Status:** NOT STARTED
+- **Files:** `client/src/components/MarketCard.tsx`, `client/src/components/__tests__/MarketCard.test.tsx`
+- **What:** Compact card showing symbol, name, price, $ change, % change, day high/low with green/red color coding
+
+### Step 5: MarketCategoryFilter Component
+- **Status:** NOT STARTED
+- **Files:** `client/src/components/MarketCategoryFilter.tsx`, `client/src/components/__tests__/MarketCategoryFilter.test.tsx`
+- **What:** Horizontal pill buttons for multi-select category filtering (same pattern as SectorSelector)
+
+### Step 6: Rewrite MarketOverview with Live Data
+- **Status:** NOT STARTED
+- **Files:** `client/src/components/MarketOverview.tsx`, `client/src/components/__tests__/MarketOverview.test.tsx`
+- **What:** Composes MarketCategoryFilter + MarketCard grid, defaults to Indices + Mag 7, deduplicates symbols across categories
+
+---
+
+*Last updated: Phase 9 planned — Markets Tab implementation*
