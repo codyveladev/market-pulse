@@ -16,6 +16,7 @@ vi.mock('../../hooks/useMarketQuotes', () => ({
     })),
     loading: false,
     error: null,
+    fetchedAt: new Date().toISOString(),
   })),
 }))
 
@@ -73,12 +74,18 @@ describe('MarketOverview', () => {
     expect(screen.getByText('^GSPC')).toBeInTheDocument()
   })
 
+  it('displays last updated timestamp', () => {
+    render(<MarketOverview />)
+    expect(screen.getByText(/updated/i)).toBeInTheDocument()
+  })
+
   it('shows loading state', async () => {
     const { useMarketQuotes } = await import('../../hooks/useMarketQuotes')
     vi.mocked(useMarketQuotes).mockReturnValue({
       quotes: [],
       loading: true,
       error: null,
+      fetchedAt: null,
     })
 
     const { container } = render(<MarketOverview />)

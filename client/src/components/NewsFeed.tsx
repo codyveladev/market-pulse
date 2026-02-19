@@ -1,5 +1,6 @@
 import { useNews } from '../hooks/useNews'
 import { NewsCard } from './NewsCard'
+import { timeAgo } from '../utils/timeAgo'
 
 interface NewsFeedProps {
   sectors: string[]
@@ -24,7 +25,7 @@ function SkeletonCard() {
 }
 
 export function NewsFeed({ sectors }: NewsFeedProps) {
-  const { articles, loading, error, refresh, secondsUntilRefresh } = useNews(sectors)
+  const { articles, loading, error, refresh, secondsUntilRefresh, fetchedAt } = useNews(sectors)
 
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -32,7 +33,7 @@ export function NewsFeed({ sectors }: NewsFeedProps) {
         <h2 className="text-lg font-semibold text-gray-100">News Feed</h2>
         <div className="flex items-center gap-3">
           <span className="text-xs text-gray-500">
-            Refresh in {secondsUntilRefresh}s
+            {fetchedAt && `Updated ${timeAgo(fetchedAt)} · `}Refresh in {secondsUntilRefresh}s
           </span>
           <button
             onClick={refresh}

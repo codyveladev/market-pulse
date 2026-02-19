@@ -7,6 +7,7 @@ interface UseNewsResult {
   error: string | null
   refresh: () => void
   secondsUntilRefresh: number
+  fetchedAt: string | null
 }
 
 const REFRESH_INTERVAL = 90_000
@@ -15,6 +16,7 @@ export function useNews(sectors: string[]): UseNewsResult {
   const [articles, setArticles] = useState<NewsArticle[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [fetchedAt, setFetchedAt] = useState<string | null>(null)
   const [secondsUntilRefresh, setSecondsUntilRefresh] = useState(90)
   const sectorsKey = sectors.join(',')
   const abortRef = useRef<AbortController | null>(null)
@@ -32,6 +34,7 @@ export function useNews(sectors: string[]): UseNewsResult {
       const response = await fetch(`/api/news${params}`, { signal: controller.signal })
       const data = await response.json()
       setArticles(data.articles ?? [])
+      setFetchedAt(data.fetchedAt ?? null)
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return
       setError(err instanceof Error ? err.message : 'Failed to fetch news')
@@ -70,5 +73,5 @@ export function useNews(sectors: string[]): UseNewsResult {
     setSecondsUntilRefresh(90)
   }, [fetchNews])
 
-  return { articles, loading, error, refresh: manualRefresh, secondsUntilRefresh }
+  return { articles, loading, error, refresh: manualRefresh, secondsUntilRefresh, fetchedAt }
 }

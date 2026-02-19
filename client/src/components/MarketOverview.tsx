@@ -3,6 +3,7 @@ import { MarketCategoryFilter } from './MarketCategoryFilter'
 import { MarketCard } from './MarketCard'
 import { getSymbolsForCategories } from '../constants/marketCategories'
 import { useMarketQuotes } from '../hooks/useMarketQuotes'
+import { timeAgo } from '../utils/timeAgo'
 
 const DEFAULT_CATEGORIES = ['indices', 'mag7']
 
@@ -30,7 +31,7 @@ export function MarketOverview() {
     [selectedCategories]
   )
 
-  const { quotes, loading, error } = useMarketQuotes(symbols)
+  const { quotes, loading, error, fetchedAt } = useMarketQuotes(symbols)
 
   const handleToggle = (id: string) => {
     setSelectedCategories((prev) =>
@@ -42,7 +43,12 @@ export function MarketOverview() {
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <h2 className="text-lg font-semibold text-gray-100">Markets</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-gray-100">Markets</h2>
+        {fetchedAt && (
+          <span className="text-xs text-gray-500">Updated {timeAgo(fetchedAt)}</span>
+        )}
+      </div>
 
       <MarketCategoryFilter
         selectedIds={selectedCategories}

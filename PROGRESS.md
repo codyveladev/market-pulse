@@ -178,4 +178,29 @@
 
 ---
 
-*Last updated: SSRF fix complete — symbol validation + URL encoding*
+## Phase 11: "Last Updated" Timestamps for News & Markets Tabs
+
+### Step 1: Expose `fetchedAt` from `useNews` Hook
+- **Status:** COMPLETE
+- **Files:** `client/src/hooks/useNews.ts`, `client/src/hooks/__tests__/useNews.test.ts` (+1 test)
+- **What:** Added `fetchedAt` state to hook, stored from API response, returned to consumers
+
+### Step 2: Expose `fetchedAt` from `useMarketQuotes` Hook
+- **Status:** COMPLETE
+- **Files:** `client/src/hooks/useMarketQuotes.ts`, `client/src/hooks/__tests__/useMarketQuotes.test.ts` (+1 test)
+- **What:** Added `fetchedAt` state to hook, stored from API response, returned to consumers
+
+### Step 3: Display "Last Updated" in NewsFeed
+- **Status:** COMPLETE
+- **Files:** `client/src/components/NewsFeed.tsx`, `client/src/components/__tests__/NewsFeed.test.tsx` (+1 test)
+- **What:** Shows "Updated X ago · Refresh in Xs" using existing `timeAgo()` utility
+
+### Step 4: Display "Last Updated" in MarketOverview
+- **Status:** COMPLETE
+- **Files:** `client/src/components/MarketOverview.tsx`, `client/src/components/__tests__/MarketOverview.test.tsx` (+1 test)
+- **What:** Shows "Updated X ago" next to Markets heading using existing `timeAgo()` utility
+- **Test count:** 207 total (141 client + 66 server) — all green
+
+---
+
+*Last updated: Phase 11 complete — Last Updated timestamps*

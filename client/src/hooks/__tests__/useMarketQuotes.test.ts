@@ -86,6 +86,16 @@ describe('useMarketQuotes', () => {
     expect(url).toContain('/api/quotes?symbols=AAPL,MSFT')
   })
 
+  it('exposes fetchedAt from the API response', async () => {
+    const { result } = renderHook(() => useMarketQuotes(['SPY', 'QQQ']))
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false)
+    })
+
+    expect(result.current.fetchedAt).toBe('2026-02-18T12:00:00Z')
+  })
+
   it('handles fetch failure gracefully', async () => {
     mockFetch.mockRejectedValue(new Error('Network failure'))
 

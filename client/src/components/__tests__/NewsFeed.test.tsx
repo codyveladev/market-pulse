@@ -27,6 +27,7 @@ describe('NewsFeed', () => {
       error: null,
       refresh: vi.fn(),
       secondsUntilRefresh: 90,
+      fetchedAt: null,
     })
 
     const { container } = render(<NewsFeed sectors={['technology']} />)
@@ -44,6 +45,7 @@ describe('NewsFeed', () => {
       error: null,
       refresh: vi.fn(),
       secondsUntilRefresh: 90,
+      fetchedAt: null,
     })
 
     render(<NewsFeed sectors={['technology', 'crypto']} />)
@@ -58,6 +60,7 @@ describe('NewsFeed', () => {
       error: 'Failed to fetch news',
       refresh: vi.fn(),
       secondsUntilRefresh: 90,
+      fetchedAt: null,
     })
 
     render(<NewsFeed sectors={['technology']} />)
@@ -71,6 +74,7 @@ describe('NewsFeed', () => {
       error: null,
       refresh: vi.fn(),
       secondsUntilRefresh: 90,
+      fetchedAt: null,
     })
 
     render(<NewsFeed sectors={['technology']} />)
@@ -85,6 +89,7 @@ describe('NewsFeed', () => {
       error: null,
       refresh: refreshFn,
       secondsUntilRefresh: 90,
+      fetchedAt: null,
     })
 
     const user = userEvent.setup()
@@ -101,10 +106,27 @@ describe('NewsFeed', () => {
       error: null,
       refresh: vi.fn(),
       secondsUntilRefresh: 90,
+      fetchedAt: null,
     })
 
     render(<NewsFeed sectors={['technology']} />)
     expect(screen.getByText(/no articles/i)).toBeInTheDocument()
+  })
+
+  it('displays last updated timestamp when fetchedAt is available', () => {
+    mockUseNews.mockReturnValue({
+      articles: [
+        { title: 'Article 1', description: 'Desc', url: 'https://example.com/1', source: 'Src', publishedAt: '2026-02-18T12:00:00Z', sectorIds: ['technology'] },
+      ],
+      loading: false,
+      error: null,
+      refresh: vi.fn(),
+      secondsUntilRefresh: 90,
+      fetchedAt: new Date().toISOString(),
+    })
+
+    render(<NewsFeed sectors={['technology']} />)
+    expect(screen.getByText(/updated/i)).toBeInTheDocument()
   })
 
   it('passes sectors to useNews hook', () => {
@@ -114,6 +136,7 @@ describe('NewsFeed', () => {
       error: null,
       refresh: vi.fn(),
       secondsUntilRefresh: 90,
+      fetchedAt: null,
     })
 
     render(<NewsFeed sectors={['technology', 'crypto']} />)

@@ -5,6 +5,7 @@ interface UseMarketQuotesResult {
   quotes: QuoteData[]
   loading: boolean
   error: string | null
+  fetchedAt: string | null
 }
 
 const REFRESH_INTERVAL = 60_000
@@ -13,6 +14,7 @@ export function useMarketQuotes(symbols: string[]): UseMarketQuotesResult {
   const [quotes, setQuotes] = useState<QuoteData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [fetchedAt, setFetchedAt] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
   const symbolsKey = symbols.join(',')
 
@@ -34,6 +36,7 @@ export function useMarketQuotes(symbols: string[]): UseMarketQuotesResult {
       const response = await fetch(`/api/quotes?symbols=${symbolsKey}`, { signal: controller.signal })
       const data = await response.json()
       setQuotes(data.quotes ?? [])
+      setFetchedAt(data.fetchedAt ?? null)
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return
       setError(err instanceof Error ? err.message : 'Failed to fetch quotes')
@@ -52,5 +55,5 @@ export function useMarketQuotes(symbols: string[]): UseMarketQuotesResult {
     }
   }, [fetchQuotes])
 
-  return { quotes, loading, error }
+  return { quotes, loading, error, fetchedAt }
 }

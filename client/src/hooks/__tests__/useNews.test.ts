@@ -81,6 +81,16 @@ describe('useNews', () => {
     })
   })
 
+  it('exposes fetchedAt from the API response', async () => {
+    const { result } = renderHook(() => useNews(['technology']))
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false)
+    })
+
+    expect(result.current.fetchedAt).toBe('2026-02-18T12:00:00Z')
+  })
+
   it('refetches when sectors change', async () => {
     const { result, rerender } = renderHook(
       ({ sectors }) => useNews(sectors),
