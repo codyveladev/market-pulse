@@ -31,6 +31,14 @@ vi.mock('./hooks/useMarketQuotes', () => ({
   })),
 }))
 
+vi.mock('./hooks/useSystemStatus', () => ({
+  useSystemStatus: vi.fn(() => ({
+    services: [],
+    loading: false,
+    error: null,
+  })),
+}))
+
 describe('App', () => {
   beforeEach(() => {
     useNavigationStore.setState({ activeTab: 'news' })
@@ -86,5 +94,15 @@ describe('App', () => {
   it('renders the refresh button on news tab', () => {
     render(<App />)
     expect(screen.getByRole('button', { name: /Refresh/ })).toBeInTheDocument()
+  })
+
+  it('switches to status view when Status tab is clicked', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /Status/ }))
+
+    expect(screen.getByRole('heading', { name: 'Partner System Status' })).toBeInTheDocument()
+    expect(screen.queryByText(/News Feed/)).not.toBeInTheDocument()
   })
 })

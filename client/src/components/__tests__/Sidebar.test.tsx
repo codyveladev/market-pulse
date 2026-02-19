@@ -43,4 +43,16 @@ describe('Sidebar', () => {
     await user.click(screen.getByRole('button', { name: /News/ }))
     expect(useNavigationStore.getState().activeTab).toBe('news')
   })
+
+  it('renders Status button in bottom section', () => {
+    render(<Sidebar />)
+    expect(screen.getByRole('button', { name: /Status/ })).toBeInTheDocument()
+  })
+
+  it('highlights Status when active', () => {
+    useNavigationStore.setState({ activeTab: 'status' })
+    render(<Sidebar />)
+    const statusButton = screen.getByRole('button', { name: /Status/ })
+    expect(statusButton.className).toMatch(/brand/)
+  })
 })

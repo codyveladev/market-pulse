@@ -12,7 +12,7 @@ export const MARKET_CATEGORIES: MarketCategory[] = [
     id: 'indices',
     label: 'Major Indices',
     icon: '📊',
-    symbols: ['SPY', 'QQQ', 'DIA', 'IWM'],
+    symbols: ['^GSPC', '^IXIC', '^DJI', '^RUT'],
   },
   {
     id: 'mag7',

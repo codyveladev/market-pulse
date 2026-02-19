@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type TabId = 'news' | 'markets'
+export type TabId = 'news' | 'markets' | 'status'
 
 interface NavigationState {
   activeTab: TabId

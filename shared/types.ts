@@ -33,6 +33,19 @@ export interface QuoteData {
   dayLow?: number;
 }
 
+// --- System Status ---
+
+export interface ServiceStatus {
+  name: string;
+  status: 'ok' | 'down' | 'unconfigured' | 'unused';
+  message: string;
+}
+
+export interface StatusResponse {
+  services: ServiceStatus[];
+  checkedAt: string;
+}
+
 // --- API Responses ---
 
 export interface NewsResponse {

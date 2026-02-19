@@ -224,6 +224,21 @@ market-pulse/
 - OBS Browser Source compatible (Chromium, 1920×1080)
 - Optional: `?kiosk=true` URL param hides browser chrome
 
+### 5.5 Partner System Status
+- Secondary sidebar item pinned to the bottom, visually separated from primary nav (News/Markets)
+- Dedicated page showing live health status for each integration
+- Server endpoint `GET /api/status` actively pings each active service
+- Each integration shows: service name, colored status dot, short status label
+- **Status types:**
+  - 🟢 **Connected** — service responded successfully
+  - 🔴 **Down** — service unreachable or returned an error
+  - 🟡 **No API Key** — API key not configured in `.env`
+  - ⚪ **Not Implemented** — key configured but integration not yet built
+- **Active integrations** (live ping): Yahoo Finance, NewsAPI.org, RSS Feeds
+- **Configured-only integrations** (key check): Finnhub, Alpha Vantage, FRED, GNews
+- Auto-refreshes every 30 seconds
+- Hidden in kiosk mode (same as other nav elements)
+
 ---
 
 ## 6. Build Roadmap

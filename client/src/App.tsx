@@ -3,6 +3,7 @@ import { SectorSelector } from './components/SectorSelector'
 import { NewsFeed } from './components/NewsFeed'
 import { Sidebar } from './components/Sidebar'
 import { MarketOverview } from './components/MarketOverview'
+import { SystemStatus } from './components/SystemStatus'
 import { useSectorStore } from './store/sectorStore'
 import { useNavigationStore } from './store/navigationStore'
 
@@ -12,7 +13,7 @@ function App() {
   const isKiosk = new URLSearchParams(window.location.search).get('kiosk') === 'true'
 
   return (
-    <div className="min-h-screen bg-surface text-white flex flex-col">
+    <div className="h-screen bg-surface text-white flex flex-col overflow-hidden">
       <TickerTape />
 
       {!isKiosk && (
@@ -23,10 +24,10 @@ function App() {
         </header>
       )}
 
-      <div className="flex flex-1">
+      <div className="flex flex-1 min-h-0">
         {!isKiosk && <Sidebar />}
 
-        <div className="flex-1">
+        <div className="flex-1 overflow-y-auto">
           {activeTab === 'news' && (
             <>
               {!isKiosk && <SectorSelector />}
@@ -39,6 +40,12 @@ function App() {
           {activeTab === 'markets' && (
             <main className="max-w-5xl mx-auto">
               <MarketOverview />
+            </main>
+          )}
+
+          {activeTab === 'status' && (
+            <main className="max-w-5xl mx-auto">
+              <SystemStatus />
             </main>
           )}
         </div>

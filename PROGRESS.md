@@ -127,4 +127,47 @@
 
 ---
 
-*Last updated: Phase 9 complete — Markets Tab fully implemented*
+### Fix: Major Indices — Use Real Index Symbols Instead of ETFs
+- **Status:** COMPLETE
+- **Files:** `client/src/constants/marketCategories.ts`, `client/src/components/__tests__/MarketOverview.test.tsx`
+- **What:** Replaced ETF proxies (SPY, QQQ, DIA, IWM) with actual Yahoo Finance index symbols (`^GSPC`, `^IXIC`, `^DJI`, `^RUT`) so the Markets tab shows real index levels (e.g. S&P 500 at ~5,200) instead of ETF share prices
+- **Test count:** 171 total (120 client + 51 server) — all green
+
+---
+
+## Phase 10: Partner System Status
+
+### Step 0: Update REQUIREMENTS.md + PROGRESS.md
+- **Status:** COMPLETE
+- **Files:** `REQUIREMENTS.md` (section 5.5), `PROGRESS.md` (this section)
+- **What:** Added feature spec and phase tracking
+
+### Step 1: Add `GET /api/status` Server Endpoint
+- **Status:** COMPLETE
+- **Files:** `server/routes/status.ts` (new), `server/routes/__tests__/status.test.ts` (10 tests), `server/app.ts`, `shared/types.ts`
+- **What:** Health check endpoint that pings Yahoo Finance, NewsAPI, RSS feeds; checks env vars for unused integrations (Finnhub, Alpha Vantage, FRED, GNews)
+
+### Step 2: Add Status Tab to Navigation Store + Sidebar
+- **Status:** COMPLETE
+- **Files:** `client/src/store/navigationStore.ts` (4 tests), `client/src/components/Sidebar.tsx` (7 tests)
+- **What:** Extended TabId with 'status', added secondary bottom section to sidebar with `mt-auto` push
+
+### Step 3: Create `useSystemStatus` Hook
+- **Status:** COMPLETE
+- **Files:** `client/src/hooks/useSystemStatus.ts` (new), `client/src/hooks/__tests__/useSystemStatus.test.ts` (4 tests)
+- **What:** Fetch hook for `/api/status`, 30s auto-refresh, AbortController cleanup
+
+### Step 4: Create `SystemStatus` Component
+- **Status:** COMPLETE
+- **Files:** `client/src/components/SystemStatus.tsx` (new), `client/src/components/__tests__/SystemStatus.test.tsx` (9 tests)
+- **What:** Status page with colored dots (green/red/yellow/gray), service names, status labels, skeleton loading
+
+### Step 5: Wire into App Layout
+- **Status:** COMPLETE
+- **Files:** `client/src/App.tsx`, `client/src/App.test.tsx` (9 tests)
+- **What:** Added status tab routing in App, mocked useSystemStatus in App tests
+- **Test count:** 198 total (137 client + 61 server) — all green
+
+---
+
+*Last updated: Phase 10 complete — Partner System Status fully implemented*

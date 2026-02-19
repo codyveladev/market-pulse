@@ -45,8 +45,8 @@ describe('MarketOverview', () => {
 
   it('renders MarketCards for default selected categories', () => {
     render(<MarketOverview />)
-    // Should show SPY, QQQ, DIA, IWM (indices) + AAPL, MSFT, NVDA, GOOGL, AMZN, META, TSLA (mag7)
-    expect(screen.getByText('SPY')).toBeInTheDocument()
+    // Should show ^GSPC, ^IXIC, ^DJI, ^RUT (real indices) + AAPL, MSFT, NVDA, GOOGL, AMZN, META, TSLA (mag7)
+    expect(screen.getByText('^GSPC')).toBeInTheDocument()
     expect(screen.getByText('AAPL')).toBeInTheDocument()
     expect(screen.getByText('TSLA')).toBeInTheDocument()
   })
@@ -69,8 +69,8 @@ describe('MarketOverview', () => {
     await user.click(screen.getByRole('button', { name: /Magnificent 7/ }))
     // AAPL should be gone (only in Mag 7 by default, not in indices)
     expect(screen.queryByText('AAPL')).not.toBeInTheDocument()
-    // SPY should still be there (indices still selected)
-    expect(screen.getByText('SPY')).toBeInTheDocument()
+    // ^GSPC should still be there (indices still selected)
+    expect(screen.getByText('^GSPC')).toBeInTheDocument()
   })
 
   it('shows loading state', async () => {

@@ -22,4 +22,9 @@ describe('navigationStore', () => {
     getState().setActiveTab('news')
     expect(getState().activeTab).toBe('news')
   })
+
+  it('switches to status tab', () => {
+    getState().setActiveTab('status')
+    expect(getState().activeTab).toBe('status')
+  })
 })
