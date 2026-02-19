@@ -66,4 +66,26 @@ describe('GET /api/quotes', () => {
     expect(res.status).toBe(200)
     expect(res.body.quotes).toEqual([])
   })
+
+  it('rejects symbols with path traversal', async () => {
+    const res = await request(app).get('/api/quotes?symbols=../etc/passwd')
+    expect(res.body.quotes).toEqual([])
+    expect(mockFetchYahoo).not.toHaveBeenCalled()
+  })
+
+  it('rejects symbols with URLs', async () => {
+    const res = await request(app).get('/api/quotes?symbols=http://evil.com')
+    expect(res.body.quotes).toEqual([])
+    expect(mockFetchYahoo).not.toHaveBeenCalled()
+  })
+
+  it('allows valid symbols including indices and hyphenated tickers', async () => {
+    await request(app).get('/api/quotes?symbols=AAPL,^GSPC,BRK-B,BF.B')
+    expect(mockFetchYahoo).toHaveBeenCalledWith(['AAPL', '^GSPC', 'BRK-B', 'BF.B'])
+  })
+
+  it('strips invalid symbols but keeps valid ones from mixed input', async () => {
+    await request(app).get('/api/quotes?symbols=AAPL,../hack,MSFT')
+    expect(mockFetchYahoo).toHaveBeenCalledWith(['AAPL', 'MSFT'])
+  })
 })

@@ -5,7 +5,7 @@ const YAHOO_CHART_URL = 'https://query1.finance.yahoo.com/v8/finance/chart'
 async function fetchSingleQuote(symbol: string): Promise<QuoteData | null> {
   try {
     const response = await fetch(
-      `${YAHOO_CHART_URL}/${symbol}?interval=1d&range=1d`,
+      `${YAHOO_CHART_URL}/${encodeURIComponent(symbol)}?interval=1d&range=1d`,
       { headers: { 'User-Agent': 'Mozilla/5.0' } }
     )
     if (!response.ok) return null
