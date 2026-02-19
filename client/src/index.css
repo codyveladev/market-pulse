@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+/*
+  Market Pulse — dark-first base styles.
+  Tailwind v4 uses CSS-based config; dark mode via the `dark` variant
+  is enabled by default using `prefers-color-scheme`. We force dark via
+  the `dark` class on <html> so it works in OBS Browser Source too.
+*/
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-surface: #0f1117;
+  --color-surface-raised: #1a1d2e;
+  --color-surface-overlay: #242838;
+  --color-brand: #3b82f6;
+  --color-positive: #22c55e;
+  --color-negative: #ef4444;
+  --font-size-body: 0.875rem;    /* 14px */
+  --font-size-headline: 1.125rem; /* 18px */
+  --animate-scroll: scroll 30s linear infinite;
+}
+
+@keyframes scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}

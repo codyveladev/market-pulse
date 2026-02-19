@@ -1,0 +1,19 @@
+{
+  "name": "market-pulse",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Real-time financial news stream dashboard",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
+    "dev:client": "npm run dev --prefix client",
+    "dev:server": "npm run dev --prefix server",
+    "build": "npm run build --prefix client && npm run build --prefix server",
+    "test": "npm run test --prefix client && npm run test --prefix server",
+    "test:client": "npm run test --prefix client",
+    "test:server": "npm run test --prefix server",
+    "install:all": "npm install && npm install --prefix client && npm install --prefix server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
