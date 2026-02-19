@@ -119,6 +119,17 @@ describe('fetchYahooQuotes', () => {
     expect(quotes[1].change).toBeLessThan(0)
   })
 
+  it('URL-encodes symbols in the fetch URL', async () => {
+    mockFetch.mockReturnValue(chartResponse({
+      symbol: '^GSPC', regularMarketPrice: 5200, chartPreviousClose: 5180,
+    }))
+
+    await fetchYahooQuotes(['^GSPC'])
+    const url = mockFetch.mock.calls[0][0] as string
+    expect(url).toContain('/chart/%5EGSPC')
+    expect(url).not.toContain('/chart/^GSPC')
+  })
+
   it('skips symbols with missing price data', async () => {
     mockFetch
       .mockReturnValueOnce(chartResponse({

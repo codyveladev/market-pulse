@@ -170,4 +170,12 @@
 
 ---
 
-*Last updated: Phase 10 complete — Partner System Status fully implemented*
+### Fix: SSRF Vulnerability in Yahoo Finance Symbol Handling
+- **Status:** COMPLETE
+- **Files:** `server/routes/quotes.ts`, `server/routes/__tests__/quotes.test.ts` (+4 tests), `server/services/yahoo.ts`, `server/services/__tests__/yahoo.test.ts` (+1 test)
+- **What:** CodeQL flagged critical SSRF — user-supplied `symbols` query param was interpolated into fetch URL without validation. Fixed with two layers: (1) strict regex validation at route level rejecting anything that doesn't match stock ticker format, (2) `encodeURIComponent` on symbol in fetch URL as defense in depth
+- **Test count:** 203 total (137 client + 66 server) — all green
+
+---
+
+*Last updated: SSRF fix complete — symbol validation + URL encoding*
