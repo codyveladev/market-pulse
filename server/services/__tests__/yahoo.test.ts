@@ -26,8 +26,11 @@ describe('fetchYahooQuotes', () => {
   it('returns normalized QuoteData from v8 chart endpoint', async () => {
     mockFetch.mockReturnValue(chartResponse({
       symbol: 'XLK',
+      shortName: 'Technology Select Sector',
       regularMarketPrice: 200.5,
       chartPreviousClose: 198.0,
+      regularMarketDayHigh: 202.0,
+      regularMarketDayLow: 197.5,
     }))
 
     const quotes = await fetchYahooQuotes(['XLK'])
@@ -36,6 +39,23 @@ describe('fetchYahooQuotes', () => {
     expect(quotes[0].price).toBe(200.5)
     expect(quotes[0].change).toBe(2.5)
     expect(quotes[0].changePercent).toBeCloseTo(1.26, 1)
+    expect(quotes[0].name).toBe('Technology Select Sector')
+    expect(quotes[0].dayHigh).toBe(202.0)
+    expect(quotes[0].dayLow).toBe(197.5)
+  })
+
+  it('returns undefined for optional fields when not present in response', async () => {
+    mockFetch.mockReturnValue(chartResponse({
+      symbol: 'XLK',
+      regularMarketPrice: 200.5,
+      chartPreviousClose: 198.0,
+    }))
+
+    const quotes = await fetchYahooQuotes(['XLK'])
+    expect(quotes).toHaveLength(1)
+    expect(quotes[0].name).toBeUndefined()
+    expect(quotes[0].dayHigh).toBeUndefined()
+    expect(quotes[0].dayLow).toBeUndefined()
   })
 
   it('fetches each symbol individually via v8 chart URL', async () => {

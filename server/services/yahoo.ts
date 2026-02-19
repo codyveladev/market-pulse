@@ -24,6 +24,9 @@ async function fetchSingleQuote(symbol: string): Promise<QuoteData | null> {
       price,
       change: Math.round(change * 100) / 100,
       changePercent: Math.round(changePercent * 100) / 100,
+      name: meta.shortName ?? undefined,
+      dayHigh: meta.regularMarketDayHigh ?? undefined,
+      dayLow: meta.regularMarketDayLow ?? undefined,
     }
   } catch {
     return null

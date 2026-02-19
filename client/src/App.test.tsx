@@ -23,6 +23,14 @@ vi.mock('./hooks/useMarketData', () => ({
   })),
 }))
 
+vi.mock('./hooks/useMarketQuotes', () => ({
+  useMarketQuotes: vi.fn(() => ({
+    quotes: [],
+    loading: false,
+    error: null,
+  })),
+}))
+
 describe('App', () => {
   beforeEach(() => {
     useNavigationStore.setState({ activeTab: 'news' })
@@ -65,13 +73,14 @@ describe('App', () => {
     expect(screen.queryByText(/News Feed/)).not.toBeInTheDocument()
   })
 
-  it('hides sector selector on markets tab', async () => {
+  it('hides news feed and refresh button on markets tab', async () => {
     const user = userEvent.setup()
     render(<App />)
 
     await user.click(screen.getByRole('button', { name: /Markets/ }))
 
-    expect(screen.queryByRole('button', { name: /Technology/ })).not.toBeInTheDocument()
+    expect(screen.queryByText(/News Feed/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Refresh/ })).not.toBeInTheDocument()
   })
 
   it('renders the refresh button on news tab', () => {

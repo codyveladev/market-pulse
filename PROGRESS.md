@@ -95,35 +95,36 @@
 ## Phase 9: Markets Tab — Full Implementation
 
 ### Step 1: Extend QuoteData + Yahoo Service
-- **Status:** NOT STARTED
-- **Files:** `shared/types.ts`, `server/services/yahoo.ts`, `server/services/__tests__/yahoo.test.ts`
-- **What:** Add `name?`, `dayHigh?`, `dayLow?` to QuoteData; parse from Yahoo v8 chart `meta` (already fetched, just not extracted)
+- **Status:** COMPLETE
+- **Files:** `shared/types.ts`, `server/services/yahoo.ts`, `server/services/__tests__/yahoo.test.ts` (9 tests)
+- **What:** Added `name?`, `dayHigh?`, `dayLow?` to QuoteData; parsing `shortName`, `regularMarketDayHigh`, `regularMarketDayLow` from Yahoo v8 chart `meta`
 
 ### Step 2: Market Categories Constant
-- **Status:** NOT STARTED
+- **Status:** COMPLETE
 - **Files:** `client/src/constants/marketCategories.ts`
-- **What:** Define 12 filterable categories: Indices (SPY, QQQ, DIA, IWM), Mag 7 (AAPL, MSFT, NVDA, GOOGL, AMZN, META, TSLA), plus 10 sector stock groups from existing `SECTORS`
+- **What:** 12 filterable categories: Indices (SPY, QQQ, DIA, IWM), Mag 7 (AAPL, MSFT, NVDA, GOOGL, AMZN, META, TSLA), plus 10 sector groups. Crypto symbols fixed to Yahoo `-USD` format. Deduplication helper.
 
 ### Step 3: useMarketQuotes Hook
-- **Status:** NOT STARTED
-- **Files:** `client/src/hooks/useMarketQuotes.ts`, `client/src/hooks/__tests__/useMarketQuotes.test.ts`
-- **What:** Parameterized fetch hook — accepts `symbols[]`, calls `/api/quotes?symbols=...`, 60s auto-refresh
+- **Status:** COMPLETE
+- **Files:** `client/src/hooks/useMarketQuotes.ts`, `client/src/hooks/__tests__/useMarketQuotes.test.ts` (6 tests)
+- **What:** Parameterized fetch hook — accepts `symbols[]`, calls `/api/quotes?symbols=...`, 60s auto-refresh, refetches on symbol change
 
 ### Step 4: MarketCard Component
-- **Status:** NOT STARTED
-- **Files:** `client/src/components/MarketCard.tsx`, `client/src/components/__tests__/MarketCard.test.tsx`
-- **What:** Compact card showing symbol, name, price, $ change, % change, day high/low with green/red color coding
+- **Status:** COMPLETE
+- **Files:** `client/src/components/MarketCard.tsx`, `client/src/components/__tests__/MarketCard.test.tsx` (8 tests)
+- **What:** Compact card: symbol, name, price, $ change, % change with green/red coloring, day high/low range bar
 
 ### Step 5: MarketCategoryFilter Component
-- **Status:** NOT STARTED
-- **Files:** `client/src/components/MarketCategoryFilter.tsx`, `client/src/components/__tests__/MarketCategoryFilter.test.tsx`
-- **What:** Horizontal pill buttons for multi-select category filtering (same pattern as SectorSelector)
+- **Status:** COMPLETE
+- **Files:** `client/src/components/MarketCategoryFilter.tsx`, `client/src/components/__tests__/MarketCategoryFilter.test.tsx` (6 tests)
+- **What:** Horizontal pill buttons for multi-select category filtering with brand highlight styling
 
 ### Step 6: Rewrite MarketOverview with Live Data
-- **Status:** NOT STARTED
-- **Files:** `client/src/components/MarketOverview.tsx`, `client/src/components/__tests__/MarketOverview.test.tsx`
-- **What:** Composes MarketCategoryFilter + MarketCard grid, defaults to Indices + Mag 7, deduplicates symbols across categories
+- **Status:** COMPLETE
+- **Files:** `client/src/components/MarketOverview.tsx`, `client/src/components/__tests__/MarketOverview.test.tsx` (7 tests)
+- **What:** Composes MarketCategoryFilter + MarketCard grid, defaults to Indices + Mag 7, skeleton loading, deduplicates symbols
+- **Test count:** 171 total (120 client + 51 server) — all green
 
 ---
 
-*Last updated: Phase 9 planned — Markets Tab implementation*
+*Last updated: Phase 9 complete — Markets Tab fully implemented*

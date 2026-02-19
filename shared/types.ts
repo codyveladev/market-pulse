@@ -28,6 +28,9 @@ export interface QuoteData {
   price: number;
   changePercent: number;
   change: number;
+  name?: string;
+  dayHigh?: number;
+  dayLow?: number;
 }
 
 // --- API Responses ---
