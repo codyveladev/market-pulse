@@ -42,6 +42,7 @@ const mockOverview = {
   marketCap: 2870000000000,
   volume: 48200000,
   chartData: [185, 186, 187, 188, 189],
+  chartDates: ['2024-11-01', '2024-11-04', '2024-11-05', '2024-11-06', '2024-11-07'],
 }
 
 describe('GET /api/research', () => {

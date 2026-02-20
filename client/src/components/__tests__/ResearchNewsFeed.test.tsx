@@ -40,11 +40,21 @@ describe('ResearchNewsFeed', () => {
     expect(links[0]).toHaveAttribute('target', '_blank')
   })
 
-  it('shows article image when available', () => {
+  it('does not render images even when image data is present', () => {
     const { container } = render(<ResearchNewsFeed news={makeArticles(2)} />)
-    const images = container.querySelectorAll('img')
-    expect(images).toHaveLength(1)
-    expect(images[0]).toHaveAttribute('src', 'https://example.com/img.jpg')
+    expect(container.querySelectorAll('img')).toHaveLength(0)
+  })
+
+  it('renders source as a styled pill badge', () => {
+    render(<ResearchNewsFeed news={makeArticles(1)} />)
+    const badge = screen.getByText('Reuters')
+    expect(badge.className).toMatch(/rounded-full/)
+    expect(badge.className).toMatch(/bg-surface/)
+  })
+
+  it('renders article summary when non-empty', () => {
+    render(<ResearchNewsFeed news={makeArticles(1)} />)
+    expect(screen.getByText('Summary 1')).toBeInTheDocument()
   })
 
   it('shows only 10 articles per page', () => {

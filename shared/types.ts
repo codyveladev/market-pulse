@@ -61,6 +61,7 @@ export interface StockOverview {
   marketCap: number | null;
   volume: number | null;
   chartData: number[];
+  chartDates: string[];
 }
 
 export interface CompanyProfile {

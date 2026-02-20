@@ -53,7 +53,13 @@ export function ResearchPage() {
           </div>
 
           {data.overview && data.overview.chartData.length > 1 && (
-            <PriceChart chartData={data.overview.chartData} />
+            <PriceChart
+              chartData={data.overview.chartData}
+              chartDates={data.overview.chartDates}
+              fiftyTwoWeekHigh={data.overview.fiftyTwoWeekHigh}
+              fiftyTwoWeekLow={data.overview.fiftyTwoWeekLow}
+              changePercent={data.overview.changePercent}
+            />
           )}
           <ResearchNewsFeed news={data.news} />
         </>

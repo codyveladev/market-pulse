@@ -52,7 +52,18 @@ export async function fetchYahooStockOverview(symbol: string): Promise<StockOver
     const changePercent = prevClose !== 0 ? (change / prevClose) * 100 : 0
 
     const closePrices: (number | null)[] = result?.indicators?.quote?.[0]?.close ?? []
-    const chartData = closePrices.filter((v): v is number => v != null)
+    const rawTimestamps: (number | null)[] = result?.timestamp ?? []
+
+    const chartData: number[] = []
+    const chartDates: string[] = []
+    for (let i = 0; i < closePrices.length; i++) {
+      const price = closePrices[i]
+      const ts = rawTimestamps[i]
+      if (price != null && ts != null) {
+        chartData.push(price)
+        chartDates.push(new Date(ts * 1000).toISOString().slice(0, 10))
+      }
+    }
 
     return {
       symbol: meta.symbol ?? symbol,
@@ -67,6 +78,7 @@ export async function fetchYahooStockOverview(symbol: string): Promise<StockOver
       marketCap: meta.marketCap ?? null,
       volume: meta.regularMarketVolume ?? null,
       chartData,
+      chartDates,
     }
   } catch {
     return null

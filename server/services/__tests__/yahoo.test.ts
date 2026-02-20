@@ -148,6 +148,7 @@ describe('fetchYahooQuotes', () => {
 function chartResponseWithIndicators(
   meta: Record<string, unknown>,
   closePrices: (number | null)[] = [],
+  timestamps: (number | null)[] = closePrices.map((_, i) => 1704067200 + i * 86400),
   status = 200,
 ) {
   return Promise.resolve({
@@ -157,6 +158,7 @@ function chartResponseWithIndicators(
       chart: {
         result: [{
           meta,
+          timestamp: timestamps,
           indicators: { quote: [{ close: closePrices }] },
         }],
         error: null,
@@ -200,15 +202,18 @@ describe('fetchYahooStockOverview', () => {
   })
 
   it('returns chartData from indicators.quote[0].close, filtering nulls', async () => {
+    const closePrices: (number | null)[] = [185, null, 187, null, 189]
+    const timestamps: (number | null)[] = [1704067200, null, 1704240000, null, 1704412800]
     mockFetch.mockReturnValue(chartResponseWithIndicators({
       symbol: 'AAPL',
       shortName: 'Apple Inc.',
       regularMarketPrice: 189.84,
       chartPreviousClose: 187.5,
-    }, [185, null, 187, null, 189]))
+    }, closePrices, timestamps))
 
     const result = await fetchYahooStockOverview('AAPL')
     expect(result!.chartData).toEqual([185, 187, 189])
+    expect(result!.chartDates).toHaveLength(3)
   })
 
   it('uses range=3mo&interval=1d for chart data', async () => {

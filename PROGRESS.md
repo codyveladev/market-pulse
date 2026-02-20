@@ -311,4 +311,61 @@ After:
 
 ---
 
-*Last updated: Phase 13 COMPLETE — News Filter Panel*
+---
+
+## Phase 14: ResearchNewsFeed Visual Consistency
+
+**Goal:** Make the ticker news cards on the Research tab match the main News Feed's card pattern for visual consistency.
+
+### Step 1: Rewrite ResearchNewsFeed Component
+- **Status:** COMPLETE
+- **Files:** `client/src/components/ResearchNewsFeed.tsx`, `client/src/components/__tests__/ResearchNewsFeed.test.tsx` (13 tests)
+- **What:**
+  - Replaced single outer card + `border-b` divider layout with individual elevated cards (`bg-surface-raised rounded-lg p-4 border border-white/5`) per article — matching NewsCard
+  - Source now renders as styled pill badge (`px-2 py-0.5 rounded-full bg-surface border border-white/10 text-gray-300`) — matching NewsCard
+  - Headline upgraded from `text-sm` to `text-lg font-semibold text-gray-100 hover:text-brand leading-snug` — matching NewsCard title style
+  - Article summary rendered below headline when non-empty (`text-sm text-gray-400 line-clamp-2`) — matching NewsCard description style
+  - Images removed entirely
+  - Section header changed from `<span className="text-sm font-medium text-gray-400">` to `<h2 className="text-lg font-semibold text-gray-100">` — matching NewsFeed header style
+  - Pagination controls retained, unchanged
+- **Test count:** 321 total (234 client + 87 server) — all green
+
+---
+
+## Phase 15: Interactive Price Chart with Recharts
+
+**Goal:** Replace the bare SVG polyline chart on the Research tab with a fully interactive Recharts AreaChart — labeled axes, hover tooltip, 1M/3M range toggle, and 52-week high/low reference lines.
+
+### Step 1: Add chartDates to types and Yahoo service
+- **Status:** COMPLETE
+- **Files:** `shared/types.ts`, `server/services/yahoo.ts`
+- **What:** Added `chartDates: string[]` to `StockOverview`. Updated `fetchYahooStockOverview` to extract `result?.timestamp`, zip-filter with close prices (dropping nulls from both), and return `chartDates` as ISO date strings (YYYY-MM-DD).
+
+### Step 2: Install Recharts and rewrite PriceChart component
+- **Status:** COMPLETE
+- **Files:** `client/src/components/PriceChart.tsx`, `client/src/components/ResearchPage.tsx`
+- **What:**
+  - Installed `recharts@^3.7.0` as a client dependency
+  - Full rewrite of `PriceChart` using `ResponsiveContainer > AreaChart`
+  - Y-axis: formatted price labels (`$NNN.NN`), auto-scaled with 8% padding
+  - X-axis: date labels formatted as "MMM D", ~5 evenly-spaced ticks
+  - Custom tooltip: date + price + Δ% from period open (green/red colored)
+  - Area fill: green/red gradient based on `changePercent`
+  - `data-positive` attribute on card div for testability
+  - ReferenceLine for 52-week high/low (dashed, labeled, when present)
+  - **1M / 3M toggle** buttons in card header (client-side slice, last 21 trading days for 1M)
+  - `isAnimationActive={false}` for test-environment compatibility
+  - Updated `ResearchPage.tsx` to pass `chartDates`, `fiftyTwoWeekHigh`, `fiftyTwoWeekLow`, `changePercent` to `PriceChart`
+
+### Step 3: Update tests
+- **Status:** COMPLETE
+- **Files:** `client/src/components/__tests__/PriceChart.test.tsx` (11 tests), `server/routes/__tests__/research.test.ts`, `client/src/components/__tests__/ResearchPage.test.tsx`, `server/services/__tests__/yahoo.test.ts`
+- **What:**
+  - PriceChart tests: mocked `ResponsiveContainer` to pass children through; added `ResizeObserver` class mock; tests cover null guard, labels, 1M/3M toggle, `data-positive` attribute, 52-week null handling
+  - yahoo.test.ts: added `timestamps` param to `chartResponseWithIndicators` helper; updated chartData null-filtering test to include timestamps
+  - research.test.ts + ResearchPage.test.tsx: added `chartDates` to mock data
+- **Test count:** 334 total (237 client + 97 server) — all green
+
+---
+
+*Last updated: Phase 15 COMPLETE — Interactive Price Chart with Recharts*
