@@ -26,9 +26,18 @@ router.get('/', async (req, res) => {
         fetchFinnhubCompanyNews(symbol),
       ])
 
+      const rawOverview = overview.status === 'fulfilled' ? overview.value : null
+      const rawProfile = profile.status === 'fulfilled' ? profile.value : null
+
+      // Yahoo chart API doesn't return marketCap — fall back to Finnhub profile (millions USD → full value)
+      const mergedOverview =
+        rawOverview != null && rawOverview.marketCap == null && rawProfile?.marketCapitalization != null
+          ? { ...rawOverview, marketCap: rawProfile.marketCapitalization * 1_000_000 }
+          : rawOverview
+
       return {
-        overview: overview.status === 'fulfilled' ? overview.value : null,
-        profile: profile.status === 'fulfilled' ? profile.value : null,
+        overview: mergedOverview,
+        profile: rawProfile,
         financials: financials.status === 'fulfilled' ? financials.value : null,
         news: news.status === 'fulfilled' ? news.value : [],
       }

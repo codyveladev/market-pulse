@@ -368,4 +368,16 @@ After:
 
 ---
 
-*Last updated: Phase 15 COMPLETE — Interactive Price Chart with Recharts*
+---
+
+## Fix: Market Cap Always Showing N/A
+
+- **Status:** COMPLETE
+- **Files:** `server/routes/research.ts`, `server/routes/__tests__/research.test.ts` (+2 tests)
+- **Root cause:** The Yahoo Finance chart API (`/v8/finance/chart`) does not include `marketCap` in its `meta` object — the field simply doesn't exist in that endpoint's response, so `meta.marketCap` was always `undefined` → `null` → "N/A" in the UI.
+- **Fix:** In `research.ts`, after `Promise.allSettled` resolves, if `overview.marketCap` is null but `profile.marketCapitalization` (Finnhub, already fetched) is available, fall back to `marketCapitalization * 1_000_000` (Finnhub reports this value in millions USD).
+- **Test count:** 336 total (237 client + 99 server) — all green
+
+---
+
+*Last updated: Market Cap fix — Finnhub fallback when Yahoo chart API omits the field*

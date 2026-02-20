@@ -108,6 +108,24 @@ describe('GET /api/research', () => {
     expect(res.body.overview).toBeNull()
   })
 
+  it('falls back to Finnhub marketCapitalization when Yahoo marketCap is null', async () => {
+    mockYahoo.mockResolvedValue({ ...mockOverview, marketCap: null })
+    mockProfile.mockResolvedValue({ name: 'Apple Inc', logo: null, industry: 'Technology', country: 'US', weburl: 'https://apple.com', marketCapitalization: 2870000 })
+
+    const res = await request(app).get('/api/research?symbol=AAPL')
+    expect(res.status).toBe(200)
+    expect(res.body.overview.marketCap).toBe(2870000 * 1_000_000)
+  })
+
+  it('keeps overview.marketCap null when both Yahoo and Finnhub have no value', async () => {
+    mockYahoo.mockResolvedValue({ ...mockOverview, marketCap: null })
+    mockProfile.mockResolvedValue({ name: 'Apple Inc', logo: null, industry: 'Technology', country: 'US', weburl: 'https://apple.com', marketCapitalization: null })
+
+    const res = await request(app).get('/api/research?symbol=AAPL')
+    expect(res.status).toBe(200)
+    expect(res.body.overview.marketCap).toBeNull()
+  })
+
   it('returns empty news array when Finnhub news fails', async () => {
     mockNews.mockRejectedValue(new Error('Finnhub down'))
 
