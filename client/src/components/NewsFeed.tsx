@@ -1,9 +1,14 @@
-import { useNews } from '../hooks/useNews'
+import type { NewsArticle } from '@shared/types'
 import { NewsCard } from './NewsCard'
 import { timeAgo } from '../utils/timeAgo'
 
 interface NewsFeedProps {
-  sectors: string[]
+  articles: NewsArticle[]
+  loading: boolean
+  error: string | null
+  refresh: () => void
+  secondsUntilRefresh: number
+  fetchedAt: string | null
 }
 
 function SkeletonCard() {
@@ -24,9 +29,7 @@ function SkeletonCard() {
   )
 }
 
-export function NewsFeed({ sectors }: NewsFeedProps) {
-  const { articles, loading, error, refresh, secondsUntilRefresh, fetchedAt } = useNews(sectors)
-
+export function NewsFeed({ articles, loading, error, refresh, secondsUntilRefresh, fetchedAt }: NewsFeedProps) {
   return (
     <div className="flex flex-col gap-4 p-4">
       <div className="flex items-center justify-between">
@@ -58,7 +61,7 @@ export function NewsFeed({ sectors }: NewsFeedProps) {
       )}
 
       {!loading && !error && articles.length === 0 && (
-        <div className="text-gray-500 text-center py-8">No articles found. Select sectors above to see news.</div>
+        <div className="text-gray-500 text-center py-8">No articles found. Adjust filters to see news.</div>
       )}
 
       {articles.length > 0 && articles.map((article) => (

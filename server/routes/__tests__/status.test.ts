@@ -15,13 +15,19 @@ vi.mock('../../services/newsapi.js', () => ({
   fetchNewsApiArticles: vi.fn(),
 }))
 
+vi.mock('../../services/finnhub.js', () => ({
+  fetchFinnhubProfile: vi.fn(),
+}))
+
 import { fetchYahooQuotes } from '../../services/yahoo.js'
 import { fetchRssArticles } from '../../services/rss.js'
 import { fetchNewsApiArticles } from '../../services/newsapi.js'
+import { fetchFinnhubProfile } from '../../services/finnhub.js'
 
 const mockYahoo = vi.mocked(fetchYahooQuotes)
 const mockRss = vi.mocked(fetchRssArticles)
 const mockNewsApi = vi.mocked(fetchNewsApiArticles)
+const mockFinnhub = vi.mocked(fetchFinnhubProfile)
 
 describe('GET /api/status', () => {
   beforeEach(() => {
@@ -29,7 +35,9 @@ describe('GET /api/status', () => {
     mockYahoo.mockResolvedValue([{ symbol: '^GSPC', price: 5200, change: 10, changePercent: 0.19 }])
     mockRss.mockResolvedValue([{ title: 'Test', description: '', url: 'https://example.com', source: 'RSS', publishedAt: new Date().toISOString(), sectorIds: [] }])
     mockNewsApi.mockResolvedValue([{ title: 'Test', description: '', url: 'https://example.com', source: 'NewsAPI', publishedAt: new Date().toISOString(), sectorIds: [] }])
+    mockFinnhub.mockResolvedValue({ name: 'Apple Inc', logo: null, industry: null, country: null, weburl: null, marketCapitalization: null })
     process.env.NEWSAPI_KEY = 'test-key'
+    process.env.FINNHUB_KEY = 'test-key'
   })
 
   it('returns a StatusResponse with services array and checkedAt', async () => {
@@ -96,20 +104,37 @@ describe('GET /api/status', () => {
     expect(newsapi.message).toBe('Down')
   })
 
+  it('returns ok status for Finnhub when key is set and fetch succeeds', async () => {
+    const res = await request(app).get('/api/status')
+    const finnhub = res.body.services.find((s: { name: string }) => s.name === 'Finnhub')
+    expect(finnhub).toBeDefined()
+    expect(finnhub.status).toBe('ok')
+    expect(finnhub.message).toBe('Connected')
+  })
+
+  it('returns unconfigured status for Finnhub when no API key', async () => {
+    delete process.env.FINNHUB_KEY
+    const res = await request(app).get('/api/status')
+    const finnhub = res.body.services.find((s: { name: string }) => s.name === 'Finnhub')
+    expect(finnhub.status).toBe('unconfigured')
+    expect(finnhub.message).toBe('No API Key')
+  })
+
+  it('returns down status for Finnhub when key is set but fetch returns null', async () => {
+    mockFinnhub.mockResolvedValue(null)
+    const res = await request(app).get('/api/status')
+    const finnhub = res.body.services.find((s: { name: string }) => s.name === 'Finnhub')
+    expect(finnhub.status).toBe('down')
+    expect(finnhub.message).toBe('Down')
+  })
+
   it('reports unused integrations with key check', async () => {
-    process.env.FINNHUB_KEY = 'test'
     delete process.env.ALPHA_VANTAGE_KEY
     const res = await request(app).get('/api/status')
-
-    const finnhub = res.body.services.find((s: { name: string }) => s.name === 'Finnhub')
-    expect(finnhub.status).toBe('unused')
-    expect(finnhub.message).toBe('Not Implemented')
 
     const alpha = res.body.services.find((s: { name: string }) => s.name === 'Alpha Vantage')
     expect(alpha.status).toBe('unconfigured')
     expect(alpha.message).toBe('No API Key')
-
-    delete process.env.FINNHUB_KEY
   })
 
   it('checks all 7 services', async () => {

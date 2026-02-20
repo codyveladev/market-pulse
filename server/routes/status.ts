@@ -3,6 +3,7 @@ import type { StatusResponse, ServiceStatus } from '../../shared/types.js'
 import { fetchYahooQuotes } from '../services/yahoo.js'
 import { fetchRssArticles } from '../services/rss.js'
 import { fetchNewsApiArticles } from '../services/newsapi.js'
+import { fetchFinnhubProfile } from '../services/finnhub.js'
 
 const router = Router()
 
@@ -46,6 +47,22 @@ async function checkNewsApi(): Promise<ServiceStatus> {
   }
 }
 
+async function checkFinnhub(): Promise<ServiceStatus> {
+  const apiKey = process.env.FINNHUB_KEY
+  if (!apiKey) {
+    return { name: 'Finnhub', status: 'unconfigured', message: 'No API Key' }
+  }
+  try {
+    const profile = await fetchFinnhubProfile('AAPL')
+    if (profile) {
+      return { name: 'Finnhub', status: 'ok', message: 'Connected' }
+    }
+    return { name: 'Finnhub', status: 'down', message: 'Down' }
+  } catch {
+    return { name: 'Finnhub', status: 'down', message: 'Down' }
+  }
+}
+
 function checkEnvKey(name: string, envVar: string): ServiceStatus {
   if (process.env[envVar]) {
     return { name, status: 'unused', message: 'Not Implemented' }
@@ -54,17 +71,18 @@ function checkEnvKey(name: string, envVar: string): ServiceStatus {
 }
 
 router.get('/', async (_req, res) => {
-  const [yahoo, rss, newsapi] = await Promise.allSettled([
+  const [yahoo, rss, newsapi, finnhub] = await Promise.allSettled([
     checkYahoo(),
     checkRss(),
     checkNewsApi(),
+    checkFinnhub(),
   ])
 
   const services: ServiceStatus[] = [
     yahoo.status === 'fulfilled' ? yahoo.value : { name: 'Yahoo Finance', status: 'down', message: 'Down' },
     rss.status === 'fulfilled' ? rss.value : { name: 'RSS Feeds', status: 'down', message: 'Down' },
     newsapi.status === 'fulfilled' ? newsapi.value : { name: 'NewsAPI', status: 'down', message: 'Down' },
-    checkEnvKey('Finnhub', 'FINNHUB_KEY'),
+    finnhub.status === 'fulfilled' ? finnhub.value : { name: 'Finnhub', status: 'down', message: 'Down' },
     checkEnvKey('Alpha Vantage', 'ALPHA_VANTAGE_KEY'),
     checkEnvKey('FRED', 'FRED_KEY'),
     checkEnvKey('GNews', 'GNEWS_KEY'),

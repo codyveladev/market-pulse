@@ -56,4 +56,12 @@ describe('NewsCard', () => {
     render(<NewsCard article={makeArticle()} />)
     expect(screen.getByText('Semiconductor makers report strong Q4.')).toBeInTheDocument()
   })
+
+  it('renders source as a styled tag badge', () => {
+    render(<NewsCard article={makeArticle()} />)
+    const tag = screen.getByTestId('source-tag')
+    expect(tag).toBeInTheDocument()
+    expect(tag).toHaveTextContent('TechCrunch')
+    expect(tag.className).toMatch(/rounded-full/)
+  })
 })

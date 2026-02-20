@@ -8,10 +8,13 @@ import { useNavigationStore } from './store/navigationStore'
 vi.mock('./hooks/useNews', () => ({
   useNews: vi.fn(() => ({
     articles: [],
+    allArticles: [],
+    availableSources: [],
     loading: false,
     error: null,
     refresh: vi.fn(),
     secondsUntilRefresh: 90,
+    fetchedAt: null,
   })),
 }))
 

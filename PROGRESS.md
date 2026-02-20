@@ -248,4 +248,67 @@
 
 ---
 
-*Last updated: Phase 12 complete — Stock Research Tab*
+## Phase 13: News Filter Panel (Source + Sector Sidebar)
+
+**Goal:** Replace the standalone horizontal SectorSelector with a unified vertical filter panel to the right of the news feed. The panel consolidates sector filtering (moved) and adds new source filtering so users can control which news outlets they see.
+
+**Layout change:**
+```
+Before:
+  ┌─────────────────────────────────────────┐
+  │ SectorSelector (horizontal pills)       │
+  ├─────────────────────────────────────────┤
+  │ NewsFeed (full width)                   │
+  └─────────────────────────────────────────┘
+
+After:
+  ┌────────────────────────┬────────────────┐
+  │ NewsFeed               │ Filter Panel   │
+  │                        │                │
+  │                        │ SECTORS        │
+  │                        │ [Tech][Finance]│
+  │                        │ [Energy][Med]  │
+  │                        │                │
+  │                        │ SOURCES        │
+  │                        │ [Reuters]      │
+  │                        │ [AP News]      │
+  │                        │ [Bloomberg]    │
+  └────────────────────────┴────────────────┘
+```
+
+**Source filtering strategy:** Client-side. Unique sources are derived from the articles already returned by the API (no server changes needed for filtering). When no sources are selected = show all. Selecting sources narrows the visible articles. This avoids a chicken-and-egg problem and is consistent with the bounded article count (NewsAPI max ~100, RSS limited).
+
+### Step 0: Source Tag on NewsCard
+- **Status:** COMPLETE
+- **Files:** `client/src/components/NewsCard.tsx`, `client/src/components/__tests__/NewsCard.test.tsx` (+1 test)
+- **What:** Replaced plain-text source display with a styled pill badge (`rounded-full bg-surface border border-white/10`) matching the tag pattern established by sector chips. `data-testid="source-tag"` for testability.
+
+### Step 1: Source Store
+- **Status:** COMPLETE
+- **Files:** `client/src/store/sourceStore.ts` (new), `client/src/store/__tests__/sourceStore.test.ts` (7 tests)
+- **What:** Zustand store matching sectorStore pattern — `selectedSources: string[]`, `toggleSource()`, `selectAll()`, `clearAll()`, `isSourceSelected()`. Persists to `market-pulse-sources` in localStorage.
+
+### Step 2: Client-side Source Filtering in useNews
+- **Status:** COMPLETE
+- **Files:** `client/src/hooks/useNews.ts`, `client/src/hooks/__tests__/useNews.test.ts` (+3 tests)
+- **What:** Derives `availableSources` (unique sorted source strings) from fetched articles. Applies source filter client-side: if `selectedSources` is empty show all; otherwise filter to matching sources. Returns `articles`, `allArticles`, and `availableSources` from hook.
+
+### Step 3: SourceFilter Component
+- **Status:** COMPLETE
+- **Files:** `client/src/components/SourceFilter.tsx` (new), `client/src/components/__tests__/SourceFilter.test.tsx` (7 tests)
+- **What:** Toggle buttons — one per available source. Same active-state styling as SectorSelector (`bg-brand/20`, ring). Includes "Clear" button when sources are selected. Reads/writes `sourceStore`. Accepts `sources: string[]` prop driven by available sources from hook.
+
+### Step 4: FilterPanel Component
+- **Status:** COMPLETE
+- **Files:** `client/src/components/FilterPanel.tsx` (new), `client/src/components/__tests__/FilterPanel.test.tsx` (6 tests)
+- **What:** Panel with two labeled sections — "Sectors" (sector buttons with Clear/All toggle) and "Sources" (wraps SourceFilter). Fixed width on desktop (`w-56`). On mobile, hidden behind a floating "Filters" button with slide-out overlay. Each section has Clear/All header action.
+
+### Step 5: Restructure News Layout in App
+- **Status:** COMPLETE
+- **Files:** `client/src/App.tsx`, `client/src/App.test.tsx`, `client/src/components/NewsFeed.tsx`, `client/src/components/__tests__/NewsFeed.test.tsx`
+- **What:** Lifted `useNews` hook from NewsFeed to App. NewsFeed now accepts props instead of calling hook internally. News tab uses 2-column flex layout: `NewsFeed (flex-1) + FilterPanel (w-56 shrink-0)`. Removed standalone SectorSelector. Updated all tests.
+- **Test count:** 313 total (227 client + 86 server) — all green
+
+---
+
+*Last updated: Phase 13 COMPLETE — News Filter Panel*

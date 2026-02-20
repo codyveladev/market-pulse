@@ -9,10 +9,14 @@ interface NewsCardProps {
 export function NewsCard({ article }: NewsCardProps) {
   return (
     <div className="bg-surface-raised rounded-lg p-4 border border-white/5">
-      <div className="flex items-center gap-2 text-xs text-gray-400 mb-2">
-        <span>{article.source}</span>
-        <span>·</span>
-        <span>{timeAgo(article.publishedAt)}</span>
+      <div className="flex items-center gap-2 text-xs mb-2">
+        <span
+          data-testid="source-tag"
+          className="px-2 py-0.5 rounded-full bg-surface border border-white/10 text-gray-300"
+        >
+          {article.source}
+        </span>
+        <span className="text-gray-500">{timeAgo(article.publishedAt)}</span>
       </div>
 
       <a
