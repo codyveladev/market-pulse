@@ -203,4 +203,49 @@
 
 ---
 
-*Last updated: Phase 11 complete — Last Updated timestamps*
+## Phase 12: Stock Research Tab
+
+### Step 1: Shared Types + Extended Yahoo Service
+- **Status:** COMPLETE
+- **Files:** `shared/types.ts`, `server/services/yahoo.ts`, `server/services/__tests__/yahoo.test.ts` (+6 tests)
+- **What:** Added StockOverview, CompanyProfile, CompanyFinancials, CompanyNewsArticle, ResearchResponse types. Added `fetchYahooStockOverview(symbol)` using `range=1mo&interval=1d` for price stats + chart data
+
+### Step 2: Finnhub Service
+- **Status:** COMPLETE
+- **Files:** `server/services/finnhub.ts` (new), `server/services/__tests__/finnhub.test.ts` (12 tests)
+- **What:** Three functions: `fetchFinnhubProfile()`, `fetchFinnhubFinancials()`, `fetchFinnhubCompanyNews()`. All gracefully return null/[] when FINNHUB_KEY is missing
+
+### Step 3: Research API Route
+- **Status:** COMPLETE
+- **Files:** `server/routes/research.ts` (new), `server/routes/__tests__/research.test.ts` (10 tests), `server/app.ts`
+- **What:** `GET /api/research?symbol=AAPL` — symbol validation, 120s cache, Promise.allSettled for graceful degradation
+
+### Step 4: Navigation + Sidebar
+- **Status:** COMPLETE
+- **Files:** `client/src/store/navigationStore.ts` (+1 test), `client/src/components/Sidebar.tsx` (+2 tests)
+- **What:** Added 'research' to TabId, added Research nav button between Markets and Status
+
+### Step 5: useResearch Hook
+- **Status:** COMPLETE
+- **Files:** `client/src/hooks/useResearch.ts` (new), `client/src/hooks/__tests__/useResearch.test.ts` (8 tests)
+- **What:** Takes symbol string, fetches on change, no auto-refresh, AbortController cleanup
+
+### Step 6: Number Formatting Utility
+- **Status:** COMPLETE
+- **Files:** `client/src/utils/formatNumber.ts` (new), `client/src/utils/__tests__/formatNumber.test.ts` (6 tests)
+- **What:** `formatLargeNumber()` ($2.87T, $150B, $5.2M) and `formatVolume()` with commas
+
+### Step 7: UI Components
+- **Status:** COMPLETE
+- **Files:** ResearchSearch (5 tests), StockHeader (5 tests), KeyStatsGrid (7 tests), PriceChart (4 tests), CompanyInfo (5 tests), ResearchNewsFeed (5 tests)
+- **What:** Search bar, price header with green/red, stats grid, SVG sparkline, company profile card, ticker news list
+
+### Step 8: ResearchPage Composite + App Wiring
+- **Status:** COMPLETE
+- **Files:** `client/src/components/ResearchPage.tsx` (7 tests), `client/src/App.tsx` (+1 test)
+- **What:** Composes all sub-components, manages search state, wires into App layout
+- **Test count:** 291 total (197 client + 94 server) — all green
+
+---
+
+*Last updated: Phase 12 complete — Stock Research Tab*

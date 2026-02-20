@@ -3,6 +3,7 @@ import { useNavigationStore, type TabId } from '../store/navigationStore'
 const NAV_ITEMS: { id: TabId; label: string; icon: string }[] = [
   { id: 'news', label: 'News', icon: '📰' },
   { id: 'markets', label: 'Markets', icon: '📈' },
+  { id: 'research', label: 'Research', icon: '🔍' },
 ]
 
 const BOTTOM_NAV_ITEMS: { id: TabId; label: string; icon: string }[] = [

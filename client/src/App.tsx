@@ -4,6 +4,7 @@ import { NewsFeed } from './components/NewsFeed'
 import { Sidebar } from './components/Sidebar'
 import { MarketOverview } from './components/MarketOverview'
 import { SystemStatus } from './components/SystemStatus'
+import { ResearchPage } from './components/ResearchPage'
 import { useSectorStore } from './store/sectorStore'
 import { useNavigationStore } from './store/navigationStore'
 
@@ -40,6 +41,12 @@ function App() {
           {activeTab === 'markets' && (
             <main className="max-w-5xl mx-auto">
               <MarketOverview />
+            </main>
+          )}
+
+          {activeTab === 'research' && (
+            <main className="max-w-5xl mx-auto">
+              <ResearchPage />
             </main>
           )}
 

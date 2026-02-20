@@ -3,6 +3,7 @@ import cors from 'cors'
 import newsRouter from './routes/news.js'
 import quotesRouter from './routes/quotes.js'
 import statusRouter from './routes/status.js'
+import researchRouter from './routes/research.js'
 
 const app = express()
 
@@ -16,5 +17,6 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/news', newsRouter)
 app.use('/api/quotes', quotesRouter)
 app.use('/api/status', statusRouter)
+app.use('/api/research', researchRouter)
 
 export default app

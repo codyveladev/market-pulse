@@ -39,6 +39,15 @@ vi.mock('./hooks/useSystemStatus', () => ({
   })),
 }))
 
+vi.mock('./hooks/useResearch', () => ({
+  useResearch: vi.fn(() => ({
+    data: null,
+    loading: false,
+    error: null,
+    fetchedAt: null,
+  })),
+}))
+
 describe('App', () => {
   beforeEach(() => {
     useNavigationStore.setState({ activeTab: 'news' })
@@ -103,6 +112,17 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: /Status/ }))
 
     expect(screen.getByRole('heading', { name: 'Partner System Status' })).toBeInTheDocument()
+    expect(screen.queryByText(/News Feed/)).not.toBeInTheDocument()
+  })
+
+  it('renders ResearchPage when research tab is active', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /Research/ }))
+
+    expect(screen.getByRole('heading', { name: 'Research' })).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/enter stock symbol/i)).toBeInTheDocument()
     expect(screen.queryByText(/News Feed/)).not.toBeInTheDocument()
   })
 })

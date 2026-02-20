@@ -55,4 +55,17 @@ describe('Sidebar', () => {
     const statusButton = screen.getByRole('button', { name: /Status/ })
     expect(statusButton.className).toMatch(/brand/)
   })
+
+  it('renders Research nav button', () => {
+    render(<Sidebar />)
+    expect(screen.getByRole('button', { name: /Research/ })).toBeInTheDocument()
+  })
+
+  it('switches to research tab on click', async () => {
+    const user = userEvent.setup()
+    render(<Sidebar />)
+
+    await user.click(screen.getByRole('button', { name: /Research/ }))
+    expect(useNavigationStore.getState().activeTab).toBe('research')
+  })
 })
