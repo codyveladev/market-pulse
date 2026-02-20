@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { NewsArticle } from '@shared/types'
 import { getSectorById } from '../constants/sectors'
 import { timeAgo } from '../utils/timeAgo'
@@ -6,7 +7,7 @@ interface NewsCardProps {
   article: NewsArticle
 }
 
-export function NewsCard({ article }: NewsCardProps) {
+export const NewsCard = memo(function NewsCard({ article }: NewsCardProps) {
   return (
     <div className="bg-surface-raised rounded-lg p-4 border border-white/5">
       <div className="flex items-center gap-2 text-xs mb-2">
@@ -50,4 +51,4 @@ export function NewsCard({ article }: NewsCardProps) {
       </div>
     </div>
   )
-}
+})

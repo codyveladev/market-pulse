@@ -34,6 +34,7 @@ export function useMarketQuotes(symbols: string[]): UseMarketQuotesResult {
 
     try {
       const response = await fetch(`/api/quotes?symbols=${symbolsKey}`, { signal: controller.signal })
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
       const data = await response.json()
       setQuotes(data.quotes ?? [])
       setFetchedAt(data.fetchedAt ?? null)

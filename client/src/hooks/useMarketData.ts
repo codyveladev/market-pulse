@@ -25,6 +25,7 @@ export function useMarketData(): UseMarketDataResult {
 
     try {
       const response = await fetch('/api/quotes', { signal: controller.signal })
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
       const data = await response.json()
       setQuotes(data.quotes ?? [])
     } catch (err) {

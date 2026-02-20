@@ -31,19 +31,23 @@ export function useResearch(symbol: string): UseResearchResult {
     setLoading(true)
     setError(null)
 
-    fetch(`/api/research?symbol=${encodeURIComponent(symbol)}`, { signal: controller.signal })
-      .then((res) => res.json())
-      .then((json: ResearchResponse) => {
+    const doFetch = async () => {
+      try {
+        const res = await fetch(`/api/research?symbol=${encodeURIComponent(symbol)}`, { signal: controller.signal })
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const json: ResearchResponse = await res.json()
         setData(json)
         setFetchedAt(json.fetchedAt ?? null)
-        setLoading(false)
-      })
-      .catch((err) => {
+      } catch (err) {
         if (err instanceof DOMException && err.name === 'AbortError') return
         setError(err instanceof Error ? err.message : 'Failed to fetch research data')
         setData(null)
+      } finally {
         setLoading(false)
-      })
+      }
+    }
+
+    doFetch()
 
     return () => controller.abort()
   }, [symbol])

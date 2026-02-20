@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { CompanyProfile } from '../../../shared/types'
 
 interface CompanyInfoProps {
@@ -5,6 +6,8 @@ interface CompanyInfoProps {
 }
 
 export function CompanyInfo({ profile }: CompanyInfoProps) {
+  const [logoFailed, setLogoFailed] = useState(false)
+
   if (!profile) {
     return (
       <div className="bg-surface-raised rounded-lg p-4 border border-white/5">
@@ -18,8 +21,13 @@ export function CompanyInfo({ profile }: CompanyInfoProps) {
     <div className="bg-surface-raised rounded-lg p-4 border border-white/5">
       <span className="text-sm font-medium text-gray-400">Company Info</span>
       <div className="flex items-center gap-3 mt-3">
-        {profile.logo && (
-          <img src={profile.logo} alt={`${profile.name} logo`} className="w-10 h-10 rounded" />
+        {profile.logo && !logoFailed && (
+          <img
+            src={profile.logo}
+            alt={`${profile.name} logo`}
+            className="w-10 h-10 rounded"
+            onError={() => setLogoFailed(true)}
+          />
         )}
         <span className="text-gray-100 font-medium">{profile.name}</span>
       </div>

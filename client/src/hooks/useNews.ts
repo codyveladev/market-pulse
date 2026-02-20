@@ -36,6 +36,7 @@ export function useNews(sectors: string[]): UseNewsResult {
     try {
       const params = sectorsKey ? `?sectors=${sectorsKey}` : ''
       const response = await fetch(`/api/news${params}`, { signal: controller.signal })
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
       const data = await response.json()
       setAllArticles(data.articles ?? [])
       setFetchedAt(data.fetchedAt ?? null)
@@ -86,7 +87,8 @@ export function useNews(sectors: string[]): UseNewsResult {
     if (selectedSources.length === 0) return allArticles
     const activeSources = selectedSources.filter((s) => availableSources.includes(s))
     if (activeSources.length === 0) return allArticles
-    return allArticles.filter((a) => activeSources.includes(a.source))
+    const sourceSet = new Set(activeSources)
+    return allArticles.filter((a) => sourceSet.has(a.source))
   }, [allArticles, selectedSources, availableSources])
 
   return { articles, allArticles, availableSources, loading, error, refresh: manualRefresh, secondsUntilRefresh, fetchedAt }

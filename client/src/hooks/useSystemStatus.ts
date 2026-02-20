@@ -25,6 +25,7 @@ export function useSystemStatus(): UseSystemStatusResult {
 
     try {
       const response = await fetch('/api/status', { signal: controller.signal })
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
       const data = await response.json()
       setServices(data.services ?? [])
     } catch (err) {
