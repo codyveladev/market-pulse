@@ -37,6 +37,13 @@ const MOCK_DATA = {
   },
   profile: { name: 'Apple Inc', logo: null, industry: 'Technology', country: 'US', weburl: 'https://apple.com', marketCapitalization: 2870000 },
   financials: { peRatio: 31.2, eps: 6.13, beta: 1.29, dividendYield: 0.55 },
+  fundamentals: {
+    pegRatio: 2.237, forwardPE: 21.01, priceToBook: 7.51, priceToSales: 3.547,
+    evToRevenue: 4.375, evToEbitda: 17.09, profitMargin: 0.157, operatingMargin: 0.231,
+    returnOnEquity: 0.352, returnOnAssets: 0.0508, quarterlyRevenueGrowth: 0.122,
+    quarterlyEarningsGrowth: 0.9, analystTargetPrice: 324.95, analystStrongBuy: 1,
+    analystBuy: 9, analystHold: 8, analystSell: 2, analystStrongSell: 1,
+  },
   news: [{ headline: 'Apple earnings', summary: 'Strong', url: 'https://example.com', source: 'Reuters', datetime: Math.floor(Date.now() / 1000) - 3600, image: null }],
   fetchedAt: new Date().toISOString(),
 }
@@ -85,6 +92,23 @@ describe('ResearchPage', () => {
     await user.type(screen.getByPlaceholderText(/enter stock symbol/i), 'AAPL{Enter}')
 
     expect(mockUseResearch).toHaveBeenCalledWith('AAPL')
+  })
+
+  it('renders FundamentalsPanel when fundamentals data is present', () => {
+    mockUseResearch.mockReturnValue({ data: MOCK_DATA, loading: false, error: null, fetchedAt: MOCK_DATA.fetchedAt })
+    render(<ResearchPage />)
+    expect(screen.getByText('Fundamentals')).toBeInTheDocument()
+    expect(screen.getByText('PEG Ratio')).toBeInTheDocument()
+    expect(screen.getByTestId('analyst-bar')).toBeInTheDocument()
+  })
+
+  it('does not render FundamentalsPanel when fundamentals is null', () => {
+    mockUseResearch.mockReturnValue({
+      data: { ...MOCK_DATA, fundamentals: null },
+      loading: false, error: null, fetchedAt: MOCK_DATA.fetchedAt,
+    })
+    render(<ResearchPage />)
+    expect(screen.queryByText('Fundamentals')).not.toBeInTheDocument()
   })
 
   it('shows updated timestamp after data loads', () => {

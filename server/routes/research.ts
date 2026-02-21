@@ -2,6 +2,7 @@ import { Router } from 'express'
 import type { ResearchResponse } from '../../shared/types.js'
 import { fetchYahooStockOverview } from '../services/yahoo.js'
 import { fetchFinnhubProfile, fetchFinnhubFinancials, fetchFinnhubCompanyNews } from '../services/finnhub.js'
+import { fetchAlphaVantageOverview } from '../services/alphaVantage.js'
 import { cacheService } from '../services/cache.js'
 
 const VALID_SYMBOL_RE = /^[\^]?[A-Z0-9][A-Z0-9.\-]{0,9}$/i
@@ -19,11 +20,12 @@ router.get('/', async (req, res) => {
 
   try {
     const data = await cacheService.getOrFetch(`research:${symbol}`, async () => {
-      const [overview, profile, financials, news] = await Promise.allSettled([
+      const [overview, profile, financials, news, av] = await Promise.allSettled([
         fetchYahooStockOverview(symbol),
         fetchFinnhubProfile(symbol),
         fetchFinnhubFinancials(symbol),
         fetchFinnhubCompanyNews(symbol),
+        fetchAlphaVantageOverview(symbol),
       ])
 
       const rawOverview = overview.status === 'fulfilled' ? overview.value : null
@@ -39,6 +41,7 @@ router.get('/', async (req, res) => {
         overview: mergedOverview,
         profile: rawProfile,
         financials: financials.status === 'fulfilled' ? financials.value : null,
+        fundamentals: av.status === 'fulfilled' ? av.value : null,
         news: news.status === 'fulfilled' ? news.value : [],
       }
     }, RESEARCH_CACHE_TTL)

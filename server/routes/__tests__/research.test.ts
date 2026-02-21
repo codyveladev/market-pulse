@@ -13,6 +13,10 @@ vi.mock('../../services/finnhub.js', () => ({
   fetchFinnhubCompanyNews: vi.fn(),
 }))
 
+vi.mock('../../services/alphaVantage.js', () => ({
+  fetchAlphaVantageOverview: vi.fn(),
+}))
+
 vi.mock('../../services/cache.js', () => ({
   cacheService: {
     get: vi.fn(),
@@ -23,11 +27,34 @@ vi.mock('../../services/cache.js', () => ({
 
 import { fetchYahooStockOverview } from '../../services/yahoo.js'
 import { fetchFinnhubProfile, fetchFinnhubFinancials, fetchFinnhubCompanyNews } from '../../services/finnhub.js'
+import { fetchAlphaVantageOverview } from '../../services/alphaVantage.js'
 
 const mockYahoo = vi.mocked(fetchYahooStockOverview)
 const mockProfile = vi.mocked(fetchFinnhubProfile)
 const mockFinancials = vi.mocked(fetchFinnhubFinancials)
 const mockNews = vi.mocked(fetchFinnhubCompanyNews)
+const mockAlphaVantage = vi.mocked(fetchAlphaVantageOverview)
+
+const mockFundamentals = {
+  pegRatio: 2.237,
+  forwardPE: 21.01,
+  priceToBook: 7.51,
+  priceToSales: 3.547,
+  evToRevenue: 4.375,
+  evToEbitda: 17.09,
+  profitMargin: 0.157,
+  operatingMargin: 0.231,
+  returnOnEquity: 0.352,
+  returnOnAssets: 0.0508,
+  quarterlyRevenueGrowth: 0.122,
+  quarterlyEarningsGrowth: 0.9,
+  analystTargetPrice: 324.95,
+  analystStrongBuy: 1,
+  analystBuy: 9,
+  analystHold: 8,
+  analystSell: 2,
+  analystStrongSell: 1,
+}
 
 const mockOverview = {
   symbol: 'AAPL',
@@ -52,6 +79,7 @@ describe('GET /api/research', () => {
     mockProfile.mockResolvedValue({ name: 'Apple Inc', logo: null, industry: 'Technology', country: 'US', weburl: 'https://apple.com', marketCapitalization: 2870000 })
     mockFinancials.mockResolvedValue({ peRatio: 31.2, eps: 6.13, beta: 1.29, dividendYield: 0.55 })
     mockNews.mockResolvedValue([{ headline: 'News', summary: 'Summary', url: 'https://example.com', source: 'Reuters', datetime: 1708300800, image: null }])
+    mockAlphaVantage.mockResolvedValue(mockFundamentals)
   })
 
   it('returns ResearchResponse shape with all fields', async () => {
@@ -60,6 +88,7 @@ describe('GET /api/research', () => {
     expect(res.body).toHaveProperty('overview')
     expect(res.body).toHaveProperty('profile')
     expect(res.body).toHaveProperty('financials')
+    expect(res.body).toHaveProperty('fundamentals')
     expect(res.body).toHaveProperty('news')
     expect(res.body).toHaveProperty('fetchedAt')
     expect(res.body.overview.symbol).toBe('AAPL')
@@ -124,6 +153,21 @@ describe('GET /api/research', () => {
     const res = await request(app).get('/api/research?symbol=AAPL')
     expect(res.status).toBe(200)
     expect(res.body.overview.marketCap).toBeNull()
+  })
+
+  it('returns fundamentals from Alpha Vantage', async () => {
+    const res = await request(app).get('/api/research?symbol=AAPL')
+    expect(res.status).toBe(200)
+    expect(res.body.fundamentals).toEqual(mockFundamentals)
+  })
+
+  it('returns fundamentals: null when Alpha Vantage fails', async () => {
+    mockAlphaVantage.mockRejectedValue(new Error('AV down'))
+
+    const res = await request(app).get('/api/research?symbol=AAPL')
+    expect(res.status).toBe(200)
+    expect(res.body.fundamentals).toBeNull()
+    expect(res.body.overview).not.toBeNull()
   })
 
   it('returns empty news array when Finnhub news fails', async () => {

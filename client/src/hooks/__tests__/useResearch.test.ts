@@ -29,6 +29,13 @@ const MOCK_RESEARCH = {
   },
   profile: { name: 'Apple Inc', logo: null, industry: 'Technology', country: 'US', weburl: 'https://apple.com', marketCapitalization: 2870000 },
   financials: { peRatio: 31.2, eps: 6.13, beta: 1.29, dividendYield: 0.55 },
+  fundamentals: {
+    pegRatio: 2.237, forwardPE: 21.01, priceToBook: 7.51, priceToSales: 3.547,
+    evToRevenue: 4.375, evToEbitda: 17.09, profitMargin: 0.157, operatingMargin: 0.231,
+    returnOnEquity: 0.352, returnOnAssets: 0.0508, quarterlyRevenueGrowth: 0.122,
+    quarterlyEarningsGrowth: 0.9, analystTargetPrice: 324.95, analystStrongBuy: 1,
+    analystBuy: 9, analystHold: 8, analystSell: 2, analystStrongSell: 1,
+  },
   news: [{ headline: 'Apple beats earnings', summary: 'Strong quarter', url: 'https://example.com', source: 'Reuters', datetime: 1708300800, image: null }],
   fetchedAt: '2026-02-18T12:00:00Z',
 }

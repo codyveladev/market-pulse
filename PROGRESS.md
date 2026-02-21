@@ -380,4 +380,165 @@ After:
 
 ---
 
-*Last updated: Market Cap fix — Finnhub fallback when Yahoo chart API omits the field*
+---
+
+## Phase 16: Alpha Vantage Fundamentals on Research Tab
+
+**Goal:** Integrate Alpha Vantage's `OVERVIEW` endpoint into the Research page — adds valuation ratios, profitability metrics, growth rates, and analyst consensus that we don't currently have. Positioned between the PriceChart and ResearchNewsFeed.
+
+**What we have today (Finnhub):** 4 metrics — P/E, EPS, Beta, Dividend Yield (in KeyStatsGrid)
+
+**What Alpha Vantage OVERVIEW adds (single API call, 49 fields):**
+- **Valuation:** PEGRatio, ForwardPE, PriceToBookRatio, PriceToSalesRatioTTM, EVToRevenue, EVToEBITDA
+- **Profitability:** ProfitMargin, OperatingMarginTTM, ReturnOnEquityTTM, ReturnOnAssetsTTM
+- **Growth:** QuarterlyRevenueGrowthYOY, QuarterlyEarningsGrowthYOY
+- **Analyst:** AnalystTargetPrice, AnalystRatingStrongBuy/Buy/Hold/Sell/StrongSell
+- **Other enrichment:** Description, Sector, 50DayMovingAverage, 200DayMovingAverage, SharesOutstanding
+
+**Approach:** Purely additive — keep Finnhub financials in KeyStatsGrid as-is, add a new `FundamentalsPanel` component below the chart. No existing code changes except wiring the new data through.
+
+**Rate limits:** Alpha Vantage free tier is restricted (25 calls/day on some plans, 500/day on others). Fundamental data is quarterly — doesn't change intraday. **Solution:** Cache Alpha Vantage responses with 24h TTL via `cacheService.getOrFetch()` (separate from the 120s research route cache). This means each unique symbol costs 1 AV call per day max.
+
+**Research page layout (after):**
+```
+┌──────────────────────────────────────────────────────────┐
+│  Research                              Updated 2m ago    │
+├──────────────────────────────────────────────────────────┤
+│  [  Search for a stock...  🔍 ]                          │
+├──────────────────────────────────────────────────────────┤
+│  StockHeader (symbol, price, change)                     │
+├────────────────────────────────┬─────────────────────────┤
+│  KeyStatsGrid (existing)       │  CompanyInfo (existing) │
+│  Mkt Cap · Vol · Day H/L       │  Logo · Name · Industry │
+│  52wk H/L · P/E · EPS · Beta   │  Country · Website      │
+├────────────────────────────────┴─────────────────────────┤
+│  PriceChart (existing Recharts area chart)               │
+├──────────────────────────────────────────────────────────┤
+│  Fundamentals                        via Alpha Vantage   │  ← NEW
+│                                                          │
+│  Valuation         Profitability      Growth             │
+│  ┌─────────┐       ┌─────────┐       ┌─────────┐       │
+│  │PEG  1.8 │       │Profit   │       │Rev Grwth│       │
+│  │Fwd PE 21│       │Margin 25│       │  +12.2% │       │
+│  │P/B  7.5 │       │Op Mar 23│       │EPS Grwth│       │
+│  │P/S  3.5 │       │ROE  35% │       │  +90.0% │       │
+│  │EV/Rev 4 │       │ROA   5% │       └─────────┘       │
+│  │EV/EBITDA│       └─────────┘                          │
+│  │  17.1   │                                             │
+│  └─────────┘                                             │
+│                                                          │
+│  Analyst Consensus                    Target: $324.95    │
+│  ████████████████████████ ▓▓▓▓▓▓▓▓▓ ░░░░░              │
+│  Strong Buy: 1 · Buy: 9 · Hold: 8 · Sell: 2 · SS: 1    │
+├──────────────────────────────────────────────────────────┤
+│  ResearchNewsFeed (existing)                             │
+└──────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Step 1: Add `FundamentalData` type to `shared/types.ts`
+- **Status:** COMPLETE
+- **File:** `shared/types.ts`
+- **What:**
+  - New interface `FundamentalData`:
+    ```
+    Valuation:  pegRatio, forwardPE, priceToBook, priceToSales, evToRevenue, evToEbitda
+    Profitability: profitMargin, operatingMargin, returnOnEquity, returnOnAssets
+    Growth: quarterlyRevenueGrowth, quarterlyEarningsGrowth
+    Analyst: analystTargetPrice, analystStrongBuy, analystBuy, analystHold, analystSell, analystStrongSell
+    ```
+    All fields `number | null` for graceful degradation
+  - Add `fundamentals: FundamentalData | null` to `ResearchResponse`
+
+### Step 2: Create Alpha Vantage service + tests
+- **Status:** COMPLETE
+- **Files:** `server/services/alphaVantage.ts` (new), `server/services/__tests__/alphaVantage.test.ts` (new)
+- **What:**
+  - `fetchAlphaVantageOverview(symbol): Promise<FundamentalData | null>`
+  - Reads `ALPHA_VANTAGE_KEY` from env — returns `null` gracefully when key is missing
+  - Calls `https://www.alphavantage.co/query?function=OVERVIEW&symbol={symbol}&apikey={key}`
+  - **Internal 24h cache** via `cacheService.getOrFetch(`av-overview:${symbol}`, ..., 86400)`
+  - Maps raw API field names (PascalCase) → camelCase interface fields
+  - Parses string values to numbers (Alpha Vantage returns everything as strings)
+  - Returns `null` if API returns error, "Note" (rate limit), or empty response
+  - Tests: successful parse, missing key returns null, rate-limit "Note" response returns null, malformed data returns null, caching behavior
+
+### Step 3: Wire into research route + tests
+- **Status:** COMPLETE
+- **Files:** `server/routes/research.ts`, `server/routes/__tests__/research.test.ts`
+- **What:**
+  - Import `fetchAlphaVantageOverview` and add to `Promise.allSettled` (5th parallel call)
+  - Add `fundamentals` to the returned object: `fundamentals: av.status === 'fulfilled' ? av.value : null`
+  - Tests: verify `fundamentals` appears in response, verify `fundamentals: null` when Alpha Vantage fails
+
+### Step 4: Update `useResearch` hook + tests
+- **Status:** COMPLETE
+- **Files:** `client/src/hooks/useResearch.ts`, `client/src/hooks/__tests__/useResearch.test.ts`
+- **What:**
+  - No code changes needed (hook already spreads the full `ResearchResponse` JSON into state)
+  - Update test mock data to include `fundamentals` field
+  - Verify the hook passes `fundamentals` through to consumers
+
+### Step 5: Create `FundamentalsPanel` component + tests
+- **Status:** COMPLETE
+- **Files:** `client/src/components/FundamentalsPanel.tsx` (new), `client/src/components/__tests__/FundamentalsPanel.test.tsx` (new)
+- **What:**
+  - Props: `fundamentals: FundamentalData`, `currentPrice: number` (for target price comparison)
+  - **Section 1 — Valuation grid:** PEG Ratio, Forward P/E, Price/Book, Price/Sales, EV/Revenue, EV/EBITDA (2×3 grid of stat items)
+  - **Section 2 — Profitability grid:** Profit Margin, Operating Margin, ROE, ROA (2×2 grid, values formatted as percentages)
+  - **Section 3 — Growth grid:** Quarterly Revenue Growth, Quarterly Earnings Growth (formatted as ±X.X%)
+  - **Section 4 — Analyst Consensus:**
+    - Horizontal stacked bar: green (strong buy + buy), yellow (hold), red (sell + strong sell)
+    - Legend with counts below the bar
+    - Analyst target price with delta vs current price (e.g. "$324.95 (+26.8%)")
+  - Styling: same card pattern as rest of Research page (`bg-surface-raised rounded-lg border border-white/5`)
+  - Section headers: `text-sm font-medium text-gray-400 uppercase tracking-wide`
+  - `null` values → "N/A", entire panel hidden when `fundamentals` is null
+  - Tests: renders all sections, handles null values, analyst bar proportions, target price delta calculation, null fundamentals = not rendered
+
+### Step 6: Wire into `ResearchPage.tsx` + tests
+- **Status:** COMPLETE
+- **Files:** `client/src/components/ResearchPage.tsx`, `client/src/components/__tests__/ResearchPage.test.tsx`
+- **What:**
+  - Add `<FundamentalsPanel>` between `<PriceChart>` and `<ResearchNewsFeed>`
+  - Only render when `data.fundamentals` is not null
+  - Pass `fundamentals={data.fundamentals}` and `currentPrice={data.overview.price}`
+  - Update ResearchPage test mock to include `fundamentals` field
+
+---
+
+**Files summary:**
+| File | Status | Change |
+|------|--------|--------|
+| `shared/types.ts` | MODIFY | Add `FundamentalData` interface, extend `ResearchResponse` |
+| `server/services/alphaVantage.ts` | NEW | Alpha Vantage OVERVIEW fetcher with 24h cache |
+| `server/services/__tests__/alphaVantage.test.ts` | NEW | Service tests |
+| `server/routes/research.ts` | MODIFY | Add Alpha Vantage to Promise.allSettled |
+| `server/routes/__tests__/research.test.ts` | MODIFY | Add fundamentals assertions |
+| `client/src/hooks/__tests__/useResearch.test.ts` | MODIFY | Add fundamentals to mock |
+| `client/src/components/FundamentalsPanel.tsx` | NEW | Valuation + Profitability + Growth + Analyst panel |
+| `client/src/components/__tests__/FundamentalsPanel.test.tsx` | NEW | Component tests |
+| `client/src/components/ResearchPage.tsx` | MODIFY | Wire FundamentalsPanel between chart and news |
+| `client/src/components/__tests__/ResearchPage.test.tsx` | MODIFY | Update mock, verify panel renders |
+
+**No new dependencies. No changes to existing Finnhub integration.**
+- **Test count:** 362 total (251 client + 111 server) — all green
+
+---
+
+## Backlog: Markets Tab Heatmap Overhaul
+
+**Status:** BACKLOGGED — needs proper data source for index constituents, sector classification, and market cap/weight before implementation. Hardcoding S&P 500 data is not scalable (quarterly rebalances, IPOs, delistings).
+
+**Prerequisites to unblock:**
+- Dynamic S&P 500 constituent list (Finnhub `/index/constituents` or similar API)
+- Per-symbol sector + market cap data for grouping and proportional tile sizing (Finnhub `/stock/profile2` — rate limit concern: 60 calls/min on free tier for ~500 symbols)
+- Server-side caching strategy for profile data (24h TTL) to stay within rate limits
+- Recharts Treemap is already available (installed via recharts@^3.7)
+
+**Rough scope when ready:** ~7 steps, all client-side plus one new server endpoint for constituent + profile aggregation. See git history for detailed step-by-step plan (commit before this one).
+
+---
+
+*Last updated: Phase 16 COMPLETE — Alpha Vantage Fundamentals on Research Tab*

@@ -89,10 +89,36 @@ export interface CompanyNewsArticle {
   image: string | null;
 }
 
+export interface FundamentalData {
+  // Valuation
+  pegRatio: number | null;
+  forwardPE: number | null;
+  priceToBook: number | null;
+  priceToSales: number | null;
+  evToRevenue: number | null;
+  evToEbitda: number | null;
+  // Profitability
+  profitMargin: number | null;
+  operatingMargin: number | null;
+  returnOnEquity: number | null;
+  returnOnAssets: number | null;
+  // Growth
+  quarterlyRevenueGrowth: number | null;
+  quarterlyEarningsGrowth: number | null;
+  // Analyst
+  analystTargetPrice: number | null;
+  analystStrongBuy: number | null;
+  analystBuy: number | null;
+  analystHold: number | null;
+  analystSell: number | null;
+  analystStrongSell: number | null;
+}
+
 export interface ResearchResponse {
   overview: StockOverview | null;
   profile: CompanyProfile | null;
   financials: CompanyFinancials | null;
+  fundamentals: FundamentalData | null;
   news: CompanyNewsArticle[];
   fetchedAt: string;
 }

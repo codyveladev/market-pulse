@@ -6,6 +6,7 @@ import { KeyStatsGrid } from './KeyStatsGrid'
 import { PriceChart } from './PriceChart'
 import { CompanyInfo } from './CompanyInfo'
 import { ResearchNewsFeed } from './ResearchNewsFeed'
+import { FundamentalsPanel } from './FundamentalsPanel'
 import { timeAgo } from '../utils/timeAgo'
 
 export function ResearchPage() {
@@ -61,6 +62,14 @@ export function ResearchPage() {
               changePercent={data.overview.changePercent}
             />
           )}
+
+          {data.fundamentals && data.overview && (
+            <FundamentalsPanel
+              fundamentals={data.fundamentals}
+              currentPrice={data.overview.price}
+            />
+          )}
+
           <ResearchNewsFeed news={data.news} />
         </>
       )}
