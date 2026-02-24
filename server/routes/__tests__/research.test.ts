@@ -17,6 +17,11 @@ vi.mock('../../services/alphaVantage.js', () => ({
   fetchAlphaVantageOverview: vi.fn(),
 }))
 
+vi.mock('../../services/gemini.js', () => ({
+  isConfigured: vi.fn(),
+  streamAnalysis: vi.fn(),
+}))
+
 vi.mock('../../services/cache.js', () => ({
   cacheService: {
     get: vi.fn(),
@@ -28,12 +33,18 @@ vi.mock('../../services/cache.js', () => ({
 import { fetchYahooStockOverview } from '../../services/yahoo.js'
 import { fetchFinnhubProfile, fetchFinnhubFinancials, fetchFinnhubCompanyNews } from '../../services/finnhub.js'
 import { fetchAlphaVantageOverview } from '../../services/alphaVantage.js'
+import { isConfigured as isGeminiConfigured, streamAnalysis } from '../../services/gemini.js'
+import { cacheService } from '../../services/cache.js'
 
 const mockYahoo = vi.mocked(fetchYahooStockOverview)
 const mockProfile = vi.mocked(fetchFinnhubProfile)
 const mockFinancials = vi.mocked(fetchFinnhubFinancials)
 const mockNews = vi.mocked(fetchFinnhubCompanyNews)
 const mockAlphaVantage = vi.mocked(fetchAlphaVantageOverview)
+const mockIsGeminiConfigured = vi.mocked(isGeminiConfigured)
+const mockStreamAnalysis = vi.mocked(streamAnalysis)
+const mockCacheGet = vi.mocked(cacheService.get)
+const mockCacheSet = vi.mocked(cacheService.set)
 
 const mockFundamentals = {
   pegRatio: 2.237,
@@ -188,5 +199,129 @@ describe('GET /api/research', () => {
     expect(mockProfile).toHaveBeenCalledWith('AAPL')
     expect(mockFinancials).toHaveBeenCalledWith('AAPL')
     expect(mockNews).toHaveBeenCalledWith('AAPL')
+  })
+})
+
+describe('GET /api/research/ai', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    vi.clearAllMocks()
+    // Reset cache mock to pass-through default
+    mockCacheGet.mockReturnValue(undefined)
+    mockCacheSet.mockReturnValue(undefined)
+    ;(cacheService.getOrFetch as ReturnType<typeof vi.fn>).mockImplementation(
+      (_key: string, fetcher: () => Promise<unknown>) => fetcher(),
+    )
+    mockYahoo.mockResolvedValue(mockOverview)
+    mockProfile.mockResolvedValue({ name: 'Apple Inc', logo: null, industry: 'Technology', country: 'US', weburl: 'https://apple.com', marketCapitalization: 2870000 })
+    mockFinancials.mockResolvedValue({ peRatio: 31.2, eps: 6.13, beta: 1.29, dividendYield: 0.55 })
+    mockNews.mockResolvedValue([{ headline: 'News', summary: 'Summary', url: 'https://example.com', source: 'Reuters', datetime: 1708300800, image: null }])
+    mockAlphaVantage.mockResolvedValue(mockFundamentals)
+    mockIsGeminiConfigured.mockReturnValue(true)
+  })
+
+  it('returns 400 for missing symbol', async () => {
+    const res = await request(app).get('/api/research/ai')
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 400 for invalid symbol', async () => {
+    const res = await request(app).get('/api/research/ai?symbol=../etc')
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 503 when GEMINI_KEY is not configured', async () => {
+    mockIsGeminiConfigured.mockReturnValue(false)
+    const res = await request(app).get('/api/research/ai?symbol=AAPL')
+    expect(res.status).toBe(503)
+    expect(res.body.error).toMatch(/GEMINI_KEY/i)
+  })
+
+  it('returns SSE content-type and streams chunks', async () => {
+    mockStreamAnalysis.mockReturnValue((async function* () {
+      yield 'Hello '
+      yield 'World'
+    })())
+
+    const res = await request(app).get('/api/research/ai?symbol=AAPL')
+    expect(res.headers['content-type']).toContain('text/event-stream')
+
+    const events = res.text.split('\n\n').filter(Boolean).map((e) => {
+      const data = e.replace('data: ', '')
+      return JSON.parse(data)
+    })
+
+    const chunks = events.filter((e: { type: string }) => e.type === 'chunk')
+    expect(chunks.length).toBeGreaterThanOrEqual(2)
+    expect(chunks[0].text).toBe('Hello ')
+    expect(chunks[1].text).toBe('World')
+
+    const done = events.find((e: { type: string }) => e.type === 'done')
+    expect(done).toBeDefined()
+    expect(done.cached).toBe(false)
+  })
+
+  it('serves cached response when available', async () => {
+    mockCacheGet.mockReturnValue('Cached analysis text')
+
+    const res = await request(app).get('/api/research/ai?symbol=AAPL')
+
+    const events = res.text.split('\n\n').filter(Boolean).map((e) => {
+      const data = e.replace('data: ', '')
+      return JSON.parse(data)
+    })
+
+    const chunk = events.find((e: { type: string }) => e.type === 'chunk')
+    expect(chunk.text).toBe('Cached analysis text')
+
+    const done = events.find((e: { type: string }) => e.type === 'done')
+    expect(done.cached).toBe(true)
+
+    expect(mockStreamAnalysis).not.toHaveBeenCalled()
+  })
+
+  it('bypasses cache when regenerate=1', async () => {
+    mockCacheGet.mockReturnValue('Cached text')
+    mockStreamAnalysis.mockReturnValue((async function* () {
+      yield 'Fresh'
+    })())
+
+    const res = await request(app).get('/api/research/ai?symbol=AAPL&regenerate=1')
+
+    const events = res.text.split('\n\n').filter(Boolean).map((e) => {
+      const data = e.replace('data: ', '')
+      return JSON.parse(data)
+    })
+
+    const chunk = events.find((e: { type: string; text?: string }) => e.type === 'chunk' && e.text === 'Fresh')
+    expect(chunk).toBeDefined()
+    expect(mockStreamAnalysis).toHaveBeenCalled()
+  })
+
+  it('returns error event when Gemini stream fails', async () => {
+    mockStreamAnalysis.mockImplementation(() => {
+      throw new Error('Gemini rate limited')
+    })
+
+    const res = await request(app).get('/api/research/ai?symbol=AAPL')
+
+    const events = res.text.split('\n\n').filter(Boolean).map((e) => {
+      const data = e.replace('data: ', '')
+      return JSON.parse(data)
+    })
+
+    const error = events.find((e: { type: string }) => e.type === 'error')
+    expect(error).toBeDefined()
+    expect(error.error).toContain('Gemini rate limited')
+  })
+
+  it('caches completed analysis with 15min TTL', async () => {
+    mockStreamAnalysis.mockReturnValue((async function* () {
+      yield 'Analysis'
+    })())
+
+    await request(app).get('/api/research/ai?symbol=AAPL')
+
+    expect(mockCacheSet).toHaveBeenCalledWith('ai-analysis:AAPL', 'Analysis', 900)
   })
 })

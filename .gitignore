@@ -4,3 +4,6 @@ dist/
 *.local
 .DS_Store
 .claude
+.agents
+marketing-video/
+skills-lock.json

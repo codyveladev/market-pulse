@@ -23,17 +23,23 @@ vi.mock('../../services/alphaVantage.js', () => ({
   fetchAlphaVantageOverview: vi.fn(),
 }))
 
+vi.mock('../../services/gemini.js', () => ({
+  isConfigured: vi.fn(),
+}))
+
 import { fetchYahooQuotes } from '../../services/yahoo.js'
 import { fetchRssArticles } from '../../services/rss.js'
 import { fetchNewsApiArticles } from '../../services/newsapi.js'
 import { fetchFinnhubProfile } from '../../services/finnhub.js'
 import { fetchAlphaVantageOverview } from '../../services/alphaVantage.js'
+import { isConfigured as isGeminiConfigured } from '../../services/gemini.js'
 
 const mockYahoo = vi.mocked(fetchYahooQuotes)
 const mockRss = vi.mocked(fetchRssArticles)
 const mockNewsApi = vi.mocked(fetchNewsApiArticles)
 const mockFinnhub = vi.mocked(fetchFinnhubProfile)
 const mockAlphaVantage = vi.mocked(fetchAlphaVantageOverview)
+const mockGeminiConfigured = vi.mocked(isGeminiConfigured)
 
 describe('GET /api/status', () => {
   beforeEach(() => {
@@ -46,6 +52,7 @@ describe('GET /api/status', () => {
     process.env.NEWSAPI_KEY = 'test-key'
     process.env.FINNHUB_KEY = 'test-key'
     process.env.ALPHA_VANTAGE_KEY = 'test-key'
+    mockGeminiConfigured.mockReturnValue(true)
   })
 
   it('returns a StatusResponse with services array and checkedAt', async () => {
@@ -160,8 +167,24 @@ describe('GET /api/status', () => {
     expect(av.message).toBe('Down')
   })
 
-  it('checks all 7 services', async () => {
+  it('returns configured status for Gemini AI when key is set', async () => {
     const res = await request(app).get('/api/status')
-    expect(res.body.services).toHaveLength(7)
+    const gemini = res.body.services.find((s: { name: string }) => s.name === 'Gemini AI')
+    expect(gemini).toBeDefined()
+    expect(gemini.status).toBe('ok')
+    expect(gemini.message).toBe('Configured')
+  })
+
+  it('returns unconfigured status for Gemini AI when no key', async () => {
+    mockGeminiConfigured.mockReturnValue(false)
+    const res = await request(app).get('/api/status')
+    const gemini = res.body.services.find((s: { name: string }) => s.name === 'Gemini AI')
+    expect(gemini.status).toBe('unconfigured')
+    expect(gemini.message).toBe('No API Key')
+  })
+
+  it('checks all 8 services', async () => {
+    const res = await request(app).get('/api/status')
+    expect(res.body.services).toHaveLength(8)
   })
 })

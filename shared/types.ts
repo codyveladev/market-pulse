@@ -123,6 +123,15 @@ export interface ResearchResponse {
   fetchedAt: string;
 }
 
+// --- AI Analysis ---
+
+export interface AIAnalysisChunk {
+  type: 'chunk' | 'done' | 'error';
+  text?: string;
+  error?: string;
+  cached?: boolean;
+}
+
 // --- API Responses ---
 
 export interface NewsResponse {

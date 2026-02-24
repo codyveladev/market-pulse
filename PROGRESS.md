@@ -527,6 +527,100 @@ After:
 
 ---
 
+## Phase 17: AI Finance Analyst Card (Gemini Integration)
+
+**Status:** COMPLETE
+
+**Goal:** Add an AI-powered research summary card to the Research tab, using Google Gemini 2.0 Flash to analyze stock data and recent headlines. Streams the response in real-time via SSE. Triggered by manual "Generate" button to save API quota. Card placed above StockHeader.
+
+**Architecture:** Separate SSE endpoint (`GET /api/research/ai?symbol=AAPL`) — decoupled from the existing research `Promise.allSettled` to avoid blocking the main response. 15-minute cache per symbol. Reads research data from existing 120s cache.
+
+### Step 1: Install `@google/genai` + env config
+- **Status:** COMPLETE
+- **Files:** `server/package.json`, `.env`
+- **What:** Added `@google/genai` dependency. Added `GEMINI_KEY=` to `.env` with free-tier docs link.
+
+### Step 2: Add `AIAnalysisChunk` type
+- **Status:** COMPLETE
+- **Files:** `shared/types.ts`
+- **What:** New `AIAnalysisChunk` interface (`type: 'chunk' | 'done' | 'error'`, `text?`, `error?`, `cached?`) for SSE event contract.
+
+### Step 3: Create Gemini service + tests
+- **Status:** COMPLETE
+- **Files:** `server/services/gemini.ts` (new), `server/services/__tests__/gemini.test.ts` (12 tests)
+- **What:**
+  - `isConfigured()` — env key check for status page
+  - `buildPrompt(data)` — pure function assembling structured context (overview, financials, fundamentals, top 10 headlines)
+  - `streamAnalysis(data)` — async generator yielding text chunks from Gemini 2.0 Flash (`maxOutputTokens: 700`, `temperature: 0.7`)
+  - System instruction: concise equity analyst persona, 3-4 paragraphs, ~200 words, bold labels
+  - Tests: isConfigured, buildPrompt with full/partial/null data, streamAnalysis throws without key, yields chunks, skips empty chunks
+
+### Step 4: Refactor research route + SSE endpoint + tests
+- **Status:** COMPLETE
+- **Files:** `server/routes/research.ts`, `server/routes/__tests__/research.test.ts` (22 tests total, +8 new)
+- **What:**
+  - Extracted `fetchResearchData(symbol)` shared function from inline `Promise.allSettled` block
+  - New `GET /ai` SSE endpoint: symbol validation, Gemini config check (503), SSE headers, 15-min cache per symbol, `regenerate=1` bypass, streaming loop, client disconnect handling via `req.on('close')`
+  - Tests: 400 missing/invalid symbol, 503 no key, SSE streaming, cached response, regenerate bypass, error event, cache TTL verification
+
+### Step 5: Add Gemini to status page + tests
+- **Status:** COMPLETE
+- **Files:** `server/routes/status.ts`, `server/routes/__tests__/status.test.ts` (17 tests total, +2 new)
+- **What:** Synchronous key check via `isConfigured()` (not live API call — avoids burning quota). Returns `ok`/`Configured` or `unconfigured`/`No API Key`. Services array now 8 items.
+
+### Step 6: Create `useAIAnalysis` hook + tests
+- **Status:** COMPLETE
+- **Files:** `client/src/hooks/useAIAnalysis.ts` (new), `client/src/hooks/__tests__/useAIAnalysis.test.ts` (9 tests)
+- **What:**
+  - Manual trigger via `start()` and `regenerate()` functions (not auto-fire on mount)
+  - State: `text`, `loading`, `error`, `isStreaming`, `cached`
+  - EventSource-based SSE consumer with proper cleanup on unmount/symbol change
+  - `regenerate()` closes existing stream, clears text, reconnects with `&regenerate=1`
+  - Tests: idle state, loading, chunk appending, cached flag, error events, connection failure, cleanup, regenerate, symbol change reset
+
+### Step 7: Create `AIAnalystCard` component + tests
+- **Status:** COMPLETE
+- **Files:** `client/src/components/AIAnalystCard.tsx` (new), `client/src/components/__tests__/AIAnalystCard.test.tsx` (10 tests)
+- **What:**
+  - Props: `symbol`, `dataReady`
+  - States: initial (Generate button), loading (pulse animation), streaming (text + blinking cursor), complete (text + disclaimer + regenerate), error
+  - "cached" badge when response from cache
+  - Disclaimer: "AI-generated analysis — not financial advice."
+  - Styling: `bg-surface-raised rounded-lg p-4 border border-white/5`
+  - Tests: null for no symbol, generate button, click calls start, loading, streaming cursor, disclaimer, error, cached badge, regenerate button, disabled during streaming
+
+### Step 8: Wire into ResearchPage + tests
+- **Status:** COMPLETE
+- **Files:** `client/src/components/ResearchPage.tsx`, `client/src/components/__tests__/ResearchPage.test.tsx` (11 tests total, +2 new)
+- **What:** AIAnalystCard placed above StockHeader inside the data-loaded block. Tests verify card renders and appears before StockHeader in DOM.
+
+---
+
+**Files summary:**
+| File | Action |
+|------|--------|
+| `server/package.json` | MODIFY — add `@google/genai` |
+| `.env` | MODIFY — add `GEMINI_KEY=` |
+| `shared/types.ts` | MODIFY — add `AIAnalysisChunk` |
+| `server/services/gemini.ts` | NEW — Gemini service (prompt builder, stream generator) |
+| `server/services/__tests__/gemini.test.ts` | NEW — 12 tests |
+| `server/routes/research.ts` | MODIFY — extract shared fetcher, add SSE endpoint |
+| `server/routes/__tests__/research.test.ts` | MODIFY — +8 tests (22 total) |
+| `server/routes/status.ts` | MODIFY — add Gemini status check |
+| `server/routes/__tests__/status.test.ts` | MODIFY — +2 tests (17 total) |
+| `client/src/hooks/useAIAnalysis.ts` | NEW — SSE EventSource hook |
+| `client/src/hooks/__tests__/useAIAnalysis.test.ts` | NEW — 9 tests |
+| `client/src/components/AIAnalystCard.tsx` | NEW — streaming AI card |
+| `client/src/components/__tests__/AIAnalystCard.test.tsx` | NEW — 10 tests |
+| `client/src/components/ResearchPage.tsx` | MODIFY — wire AIAnalystCard above StockHeader |
+| `client/src/components/__tests__/ResearchPage.test.tsx` | MODIFY — +2 tests (11 total) |
+
+**New tests:** 43 (total 407: 272 client + 135 server) — all green
+
+**Cost:** Gemini 2.0 Flash — $0.10/1M input, $0.40/1M output (~$0.0003/analysis). Manual trigger + 15min cache keeps usage minimal.
+
+---
+
 ## Backlog: Markets Tab Heatmap Overhaul
 
 **Status:** BACKLOGGED — needs proper data source for index constituents, sector classification, and market cap/weight before implementation. Hardcoding S&P 500 data is not scalable (quarterly rebalances, IPOs, delistings).
@@ -541,4 +635,4 @@ After:
 
 ---
 
-*Last updated: Phase 16 COMPLETE — Alpha Vantage Fundamentals on Research Tab*
+*Last updated: Phase 17 COMPLETE — AI Finance Analyst Card (Gemini Integration) — 407 tests passing*

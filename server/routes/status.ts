@@ -5,6 +5,7 @@ import { fetchRssArticles } from '../services/rss.js'
 import { fetchNewsApiArticles } from '../services/newsapi.js'
 import { fetchFinnhubProfile } from '../services/finnhub.js'
 import { fetchAlphaVantageOverview } from '../services/alphaVantage.js'
+import { isConfigured as isGeminiConfigured } from '../services/gemini.js'
 
 const router = Router()
 
@@ -80,6 +81,13 @@ async function checkAlphaVantage(): Promise<ServiceStatus> {
   }
 }
 
+function checkGemini(): ServiceStatus {
+  if (isGeminiConfigured()) {
+    return { name: 'Gemini AI', status: 'ok', message: 'Configured' }
+  }
+  return { name: 'Gemini AI', status: 'unconfigured', message: 'No API Key' }
+}
+
 function checkEnvKey(name: string, envVar: string): ServiceStatus {
   if (process.env[envVar]) {
     return { name, status: 'unused', message: 'Not Implemented' }
@@ -102,6 +110,7 @@ router.get('/', async (_req, res) => {
     newsapi.status === 'fulfilled' ? newsapi.value : { name: 'NewsAPI', status: 'down', message: 'Down' },
     finnhub.status === 'fulfilled' ? finnhub.value : { name: 'Finnhub', status: 'down', message: 'Down' },
     alphaVantage.status === 'fulfilled' ? alphaVantage.value : { name: 'Alpha Vantage', status: 'down', message: 'Down' },
+    checkGemini(),
     checkEnvKey('FRED', 'FRED_KEY'),
     checkEnvKey('GNews', 'GNEWS_KEY'),
   ]

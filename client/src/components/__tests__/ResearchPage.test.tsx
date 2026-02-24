@@ -15,6 +15,18 @@ vi.mock('../../hooks/useResearch', () => ({
   useResearch: vi.fn(),
 }))
 
+vi.mock('../../hooks/useAIAnalysis', () => ({
+  useAIAnalysis: vi.fn().mockReturnValue({
+    text: '',
+    loading: false,
+    error: null,
+    isStreaming: false,
+    cached: false,
+    start: vi.fn(),
+    regenerate: vi.fn(),
+  }),
+}))
+
 import { useResearch } from '../../hooks/useResearch'
 
 const mockUseResearch = vi.mocked(useResearch)
@@ -115,5 +127,25 @@ describe('ResearchPage', () => {
     mockUseResearch.mockReturnValue({ data: MOCK_DATA, loading: false, error: null, fetchedAt: new Date().toISOString() })
     render(<ResearchPage />)
     expect(screen.getByText(/updated/i)).toBeInTheDocument()
+  })
+
+  it('renders AIAnalystCard when data is loaded', async () => {
+    const user = userEvent.setup()
+    mockUseResearch.mockReturnValue({ data: MOCK_DATA, loading: false, error: null, fetchedAt: MOCK_DATA.fetchedAt })
+    render(<ResearchPage />)
+    // Submit a symbol to set internal state (AIAnalystCard returns null for empty symbol)
+    await user.type(screen.getByPlaceholderText(/enter stock symbol/i), 'AAPL{Enter}')
+    expect(screen.getByTestId('generate-btn')).toBeInTheDocument()
+  })
+
+  it('places AIAnalystCard before StockHeader', async () => {
+    const user = userEvent.setup()
+    mockUseResearch.mockReturnValue({ data: MOCK_DATA, loading: false, error: null, fetchedAt: MOCK_DATA.fetchedAt })
+    const { container } = render(<ResearchPage />)
+    await user.type(screen.getByPlaceholderText(/enter stock symbol/i), 'AAPL{Enter}')
+    const generateBtn = screen.getByTestId('generate-btn')
+    const stockName = screen.getByText('Apple Inc.')
+    // AI card should appear before StockHeader in the DOM
+    expect(generateBtn.compareDocumentPosition(stockName) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 })

@@ -7,6 +7,7 @@ import { PriceChart } from './PriceChart'
 import { CompanyInfo } from './CompanyInfo'
 import { ResearchNewsFeed } from './ResearchNewsFeed'
 import { FundamentalsPanel } from './FundamentalsPanel'
+import { AIAnalystCard } from './AIAnalystCard'
 import { timeAgo } from '../utils/timeAgo'
 
 export function ResearchPage() {
@@ -40,6 +41,7 @@ export function ResearchPage() {
 
       {data && !loading && (
         <>
+          <AIAnalystCard symbol={symbol} dataReady={data !== null} />
           {data.overview && <StockHeader overview={data.overview} />}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
