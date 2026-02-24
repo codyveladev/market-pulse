@@ -220,21 +220,31 @@ describe('GET /api/research/ai', () => {
     mockIsGeminiConfigured.mockReturnValue(true)
   })
 
-  it('returns 400 for missing symbol', async () => {
+  it('returns SSE error event for missing symbol', async () => {
     const res = await request(app).get('/api/research/ai')
-    expect(res.status).toBe(400)
+    expect(res.headers['content-type']).toContain('text/event-stream')
+    const events = res.text.split('\n\n').filter(Boolean).map((e) => JSON.parse(e.replace('data: ', '')))
+    const error = events.find((e: { type: string }) => e.type === 'error')
+    expect(error).toBeDefined()
+    expect(error.error).toMatch(/invalid|missing/i)
   })
 
-  it('returns 400 for invalid symbol', async () => {
+  it('returns SSE error event for invalid symbol', async () => {
     const res = await request(app).get('/api/research/ai?symbol=../etc')
-    expect(res.status).toBe(400)
+    expect(res.headers['content-type']).toContain('text/event-stream')
+    const events = res.text.split('\n\n').filter(Boolean).map((e) => JSON.parse(e.replace('data: ', '')))
+    const error = events.find((e: { type: string }) => e.type === 'error')
+    expect(error).toBeDefined()
   })
 
-  it('returns 503 when GEMINI_KEY is not configured', async () => {
+  it('returns SSE error event when GEMINI_KEY is not configured', async () => {
     mockIsGeminiConfigured.mockReturnValue(false)
     const res = await request(app).get('/api/research/ai?symbol=AAPL')
-    expect(res.status).toBe(503)
-    expect(res.body.error).toMatch(/GEMINI_KEY/i)
+    expect(res.headers['content-type']).toContain('text/event-stream')
+    const events = res.text.split('\n\n').filter(Boolean).map((e) => JSON.parse(e.replace('data: ', '')))
+    const error = events.find((e: { type: string }) => e.type === 'error')
+    expect(error).toBeDefined()
+    expect(error.error).toMatch(/GEMINI_KEY/i)
   })
 
   it('returns SSE content-type and streams chunks', async () => {

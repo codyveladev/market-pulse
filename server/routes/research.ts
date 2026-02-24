@@ -68,23 +68,25 @@ router.get('/', async (req, res) => {
 router.get('/ai', async (req, res) => {
   const symbol = ((req.query.symbol as string) ?? '').trim().toUpperCase()
 
-  if (!symbol || !VALID_SYMBOL_RE.test(symbol)) {
-    res.status(400).json({ error: 'Invalid or missing symbol' })
-    return
-  }
-
-  if (!isGeminiConfigured()) {
-    res.status(503).json({ error: 'AI analysis unavailable — GEMINI_KEY not configured' })
-    return
-  }
-
-  // SSE headers
+  // SSE headers — must be set before any writes so EventSource connects
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
     'X-Accel-Buffering': 'no',
   })
+
+  if (!symbol || !VALID_SYMBOL_RE.test(symbol)) {
+    res.write(`data: ${JSON.stringify({ type: 'error', error: 'Invalid or missing stock symbol' })}\n\n`)
+    res.end()
+    return
+  }
+
+  if (!isGeminiConfigured()) {
+    res.write(`data: ${JSON.stringify({ type: 'error', error: 'AI analysis unavailable — GEMINI_KEY not configured' })}\n\n`)
+    res.end()
+    return
+  }
 
   // Check cache (skip if regenerate requested)
   const cacheKey = `ai-analysis:${symbol}`
