@@ -4,6 +4,7 @@ import { fetchYahooQuotes } from '../services/yahoo.js'
 import { fetchRssArticles } from '../services/rss.js'
 import { fetchNewsApiArticles } from '../services/newsapi.js'
 import { fetchFinnhubProfile } from '../services/finnhub.js'
+import { fetchAlphaVantageOverview } from '../services/alphaVantage.js'
 
 const router = Router()
 
@@ -63,6 +64,22 @@ async function checkFinnhub(): Promise<ServiceStatus> {
   }
 }
 
+async function checkAlphaVantage(): Promise<ServiceStatus> {
+  const apiKey = process.env.ALPHA_VANTAGE_KEY
+  if (!apiKey) {
+    return { name: 'Alpha Vantage', status: 'unconfigured', message: 'No API Key' }
+  }
+  try {
+    const data = await fetchAlphaVantageOverview('AAPL')
+    if (data) {
+      return { name: 'Alpha Vantage', status: 'ok', message: 'Connected' }
+    }
+    return { name: 'Alpha Vantage', status: 'down', message: 'Down' }
+  } catch {
+    return { name: 'Alpha Vantage', status: 'down', message: 'Down' }
+  }
+}
+
 function checkEnvKey(name: string, envVar: string): ServiceStatus {
   if (process.env[envVar]) {
     return { name, status: 'unused', message: 'Not Implemented' }
@@ -71,11 +88,12 @@ function checkEnvKey(name: string, envVar: string): ServiceStatus {
 }
 
 router.get('/', async (_req, res) => {
-  const [yahoo, rss, newsapi, finnhub] = await Promise.allSettled([
+  const [yahoo, rss, newsapi, finnhub, alphaVantage] = await Promise.allSettled([
     checkYahoo(),
     checkRss(),
     checkNewsApi(),
     checkFinnhub(),
+    checkAlphaVantage(),
   ])
 
   const services: ServiceStatus[] = [
@@ -83,7 +101,7 @@ router.get('/', async (_req, res) => {
     rss.status === 'fulfilled' ? rss.value : { name: 'RSS Feeds', status: 'down', message: 'Down' },
     newsapi.status === 'fulfilled' ? newsapi.value : { name: 'NewsAPI', status: 'down', message: 'Down' },
     finnhub.status === 'fulfilled' ? finnhub.value : { name: 'Finnhub', status: 'down', message: 'Down' },
-    checkEnvKey('Alpha Vantage', 'ALPHA_VANTAGE_KEY'),
+    alphaVantage.status === 'fulfilled' ? alphaVantage.value : { name: 'Alpha Vantage', status: 'down', message: 'Down' },
     checkEnvKey('FRED', 'FRED_KEY'),
     checkEnvKey('GNews', 'GNEWS_KEY'),
   ]

@@ -19,15 +19,21 @@ vi.mock('../../services/finnhub.js', () => ({
   fetchFinnhubProfile: vi.fn(),
 }))
 
+vi.mock('../../services/alphaVantage.js', () => ({
+  fetchAlphaVantageOverview: vi.fn(),
+}))
+
 import { fetchYahooQuotes } from '../../services/yahoo.js'
 import { fetchRssArticles } from '../../services/rss.js'
 import { fetchNewsApiArticles } from '../../services/newsapi.js'
 import { fetchFinnhubProfile } from '../../services/finnhub.js'
+import { fetchAlphaVantageOverview } from '../../services/alphaVantage.js'
 
 const mockYahoo = vi.mocked(fetchYahooQuotes)
 const mockRss = vi.mocked(fetchRssArticles)
 const mockNewsApi = vi.mocked(fetchNewsApiArticles)
 const mockFinnhub = vi.mocked(fetchFinnhubProfile)
+const mockAlphaVantage = vi.mocked(fetchAlphaVantageOverview)
 
 describe('GET /api/status', () => {
   beforeEach(() => {
@@ -36,8 +42,10 @@ describe('GET /api/status', () => {
     mockRss.mockResolvedValue([{ title: 'Test', description: '', url: 'https://example.com', source: 'RSS', publishedAt: new Date().toISOString(), sectorIds: [] }])
     mockNewsApi.mockResolvedValue([{ title: 'Test', description: '', url: 'https://example.com', source: 'NewsAPI', publishedAt: new Date().toISOString(), sectorIds: [] }])
     mockFinnhub.mockResolvedValue({ name: 'Apple Inc', logo: null, industry: null, country: null, weburl: null, marketCapitalization: null })
+    mockAlphaVantage.mockResolvedValue({ pegRatio: 2.2, forwardPE: 21, priceToBook: 7.5, priceToSales: 3.5, evToRevenue: 4.3, evToEbitda: 17, profitMargin: 0.15, operatingMargin: 0.23, returnOnEquity: 0.35, returnOnAssets: 0.05, quarterlyRevenueGrowth: 0.12, quarterlyEarningsGrowth: 0.9, analystTargetPrice: 325, analystStrongBuy: 1, analystBuy: 9, analystHold: 8, analystSell: 2, analystStrongSell: 1 })
     process.env.NEWSAPI_KEY = 'test-key'
     process.env.FINNHUB_KEY = 'test-key'
+    process.env.ALPHA_VANTAGE_KEY = 'test-key'
   })
 
   it('returns a StatusResponse with services array and checkedAt', async () => {
@@ -128,13 +136,28 @@ describe('GET /api/status', () => {
     expect(finnhub.message).toBe('Down')
   })
 
-  it('reports unused integrations with key check', async () => {
+  it('returns ok status for Alpha Vantage when key is set and fetch succeeds', async () => {
+    const res = await request(app).get('/api/status')
+    const av = res.body.services.find((s: { name: string }) => s.name === 'Alpha Vantage')
+    expect(av).toBeDefined()
+    expect(av.status).toBe('ok')
+    expect(av.message).toBe('Connected')
+  })
+
+  it('returns unconfigured status for Alpha Vantage when no API key', async () => {
     delete process.env.ALPHA_VANTAGE_KEY
     const res = await request(app).get('/api/status')
+    const av = res.body.services.find((s: { name: string }) => s.name === 'Alpha Vantage')
+    expect(av.status).toBe('unconfigured')
+    expect(av.message).toBe('No API Key')
+  })
 
-    const alpha = res.body.services.find((s: { name: string }) => s.name === 'Alpha Vantage')
-    expect(alpha.status).toBe('unconfigured')
-    expect(alpha.message).toBe('No API Key')
+  it('returns down status for Alpha Vantage when key is set but fetch returns null', async () => {
+    mockAlphaVantage.mockResolvedValue(null)
+    const res = await request(app).get('/api/status')
+    const av = res.body.services.find((s: { name: string }) => s.name === 'Alpha Vantage')
+    expect(av.status).toBe('down')
+    expect(av.message).toBe('Down')
   })
 
   it('checks all 7 services', async () => {
