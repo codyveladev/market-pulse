@@ -75,6 +75,7 @@ router.get('/ai', async (req, res) => {
     'Connection': 'keep-alive',
     'X-Accel-Buffering': 'no',
   })
+  res.flushHeaders()
 
   if (!symbol || !VALID_SYMBOL_RE.test(symbol)) {
     res.write(`data: ${JSON.stringify({ type: 'error', error: 'Invalid or missing stock symbol' })}\n\n`)

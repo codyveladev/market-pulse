@@ -1,3 +1,4 @@
+import ReactMarkdown from 'react-markdown'
 import { useAIAnalysis } from '../hooks/useAIAnalysis'
 
 interface AIAnalystCardProps {
@@ -70,8 +71,10 @@ export function AIAnalystCard({ symbol, dataReady }: AIAnalystCardProps) {
 
       {/* Streamed text */}
       {text && (
-        <div className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap" data-testid="ai-text">
-          {text}
+        <div className="text-sm text-gray-300 leading-relaxed" data-testid="ai-text">
+          <div className="prose prose-invert prose-sm max-w-none [&_p]:mb-2 [&_p:last-child]:mb-0 [&_strong]:text-gray-100">
+            <ReactMarkdown>{text}</ReactMarkdown>
+          </div>
           {isStreaming && (
             <span
               className="inline-block w-1.5 h-4 bg-brand animate-pulse ml-0.5 align-text-bottom"
