@@ -1,7 +1,7 @@
 import { GoogleGenAI } from '@google/genai'
 import type { ResearchResponse } from '../../shared/types.js'
 
-const MODEL = 'gemini-2.0-flash'
+const MODEL = 'gemini-2.5-flash'
 
 function getKey(): string | null {
   return process.env.GEMINI_KEY || null
@@ -65,9 +65,12 @@ export async function* streamAnalysis(data: ResearchResponse): AsyncGenerator<st
     model: MODEL,
     contents: buildPrompt(data),
     config: {
-      maxOutputTokens: 700,
+      maxOutputTokens: 2048,
       temperature: 0.7,
       systemInstruction: SYSTEM_INSTRUCTION,
+      // gemini-2.5-flash is a thinking model — cap the thinking budget
+      // so most tokens go to the visible text output
+      thinkingConfig: { thinkingBudget: 256 },
     },
   })
 
