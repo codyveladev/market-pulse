@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   ResponsiveContainer,
   AreaChart,
@@ -86,18 +86,22 @@ export function PriceChart({
   const color = isPositive ? '#22c55e' : '#ef4444'
   const gradientId = isPositive ? 'gradientGreen' : 'gradientRed'
 
-  const prices = slicedPrices
-  const minPrice = Math.min(...prices)
-  const maxPrice = Math.max(...prices)
-  const padding = (maxPrice - minPrice) * 0.08 || 1
-  const yDomain = [minPrice - padding, maxPrice + padding]
+  const { yDomain, xTicks } = useMemo(() => {
+    const minPrice = Math.min(...slicedPrices)
+    const maxPrice = Math.max(...slicedPrices)
+    const padding = (maxPrice - minPrice) * 0.08 || 1
 
-  // Show ~5 date ticks spaced evenly
-  const tickCount = Math.min(5, chartPoints.length)
-  const tickInterval = Math.floor((chartPoints.length - 1) / (tickCount - 1)) || 1
-  const xTicks = chartPoints
-    .filter((_, i) => i % tickInterval === 0 || i === chartPoints.length - 1)
-    .map((p) => p.date)
+    const tickCount = Math.min(5, chartPoints.length)
+    const tickInterval = Math.floor((chartPoints.length - 1) / (tickCount - 1)) || 1
+    const ticks = chartPoints
+      .filter((_, i) => i % tickInterval === 0 || i === chartPoints.length - 1)
+      .map((p) => p.date)
+
+    return {
+      yDomain: [minPrice - padding, maxPrice + padding],
+      xTicks: ticks,
+    }
+  }, [slicedPrices, chartPoints])
 
   const rangeBtn = (r: Range) =>
     `px-2 py-0.5 text-xs rounded transition-colors ${

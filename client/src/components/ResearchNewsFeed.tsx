@@ -29,9 +29,9 @@ export function ResearchNewsFeed({ news }: ResearchNewsFeedProps) {
         <p className="text-gray-500 text-sm">No news available.</p>
       ) : (
         <>
-          {pageArticles.map((article, i) => (
+          {pageArticles.map((article) => (
             <div
-              key={start + i}
+              key={`${article.datetime}-${article.headline}`}
               className="bg-surface-raised rounded-lg p-4 border border-white/5"
             >
               <div className="flex items-center gap-2 text-xs mb-2">

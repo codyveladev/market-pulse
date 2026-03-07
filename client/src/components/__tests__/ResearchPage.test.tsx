@@ -9,7 +9,7 @@ const _ResizeObserver = class ResizeObserver {
   unobserve() {}
   disconnect() {}
 }
-global.ResizeObserver = _ResizeObserver as unknown as typeof ResizeObserver
+globalThis.ResizeObserver = _ResizeObserver as unknown as typeof ResizeObserver
 
 vi.mock('../../hooks/useResearch', () => ({
   useResearch: vi.fn(),
@@ -91,6 +91,17 @@ describe('ResearchPage', () => {
     expect(screen.getByText('Apple earnings')).toBeInTheDocument()
   })
 
+  it('shows not found state when overview is null', () => {
+    mockUseResearch.mockReturnValue({
+      data: { overview: null, profile: null, financials: null, fundamentals: null, news: [], fetchedAt: new Date().toISOString() },
+      loading: false, error: null, fetchedAt: new Date().toISOString(),
+    })
+    render(<ResearchPage />)
+    expect(screen.getByTestId('not-found')).toBeInTheDocument()
+    expect(screen.getByText(/ticker not found/i)).toBeInTheDocument()
+    expect(screen.queryByText('Apple Inc.')).not.toBeInTheDocument()
+  })
+
   it('shows error message when fetch fails', () => {
     mockUseResearch.mockReturnValue({ data: null, loading: false, error: 'Network failure', fetchedAt: null })
     render(<ResearchPage />)
@@ -129,7 +140,7 @@ describe('ResearchPage', () => {
     expect(screen.getByText(/updated/i)).toBeInTheDocument()
   })
 
-  it('renders AIAnalystCard when data is loaded', async () => {
+  it('renders ScoutCard when data is loaded', async () => {
     const user = userEvent.setup()
     mockUseResearch.mockReturnValue({ data: MOCK_DATA, loading: false, error: null, fetchedAt: MOCK_DATA.fetchedAt })
     render(<ResearchPage />)
@@ -138,14 +149,14 @@ describe('ResearchPage', () => {
     expect(screen.getByTestId('generate-btn')).toBeInTheDocument()
   })
 
-  it('places AIAnalystCard before StockHeader', async () => {
+  it('places ScoutCard before StockHeader', async () => {
     const user = userEvent.setup()
     mockUseResearch.mockReturnValue({ data: MOCK_DATA, loading: false, error: null, fetchedAt: MOCK_DATA.fetchedAt })
-    const { container } = render(<ResearchPage />)
+    render(<ResearchPage />)
     await user.type(screen.getByPlaceholderText(/enter stock symbol/i), 'AAPL{Enter}')
     const generateBtn = screen.getByTestId('generate-btn')
     const stockName = screen.getByText('Apple Inc.')
-    // AI card should appear before StockHeader in the DOM
+    // ScoutCard should appear before StockHeader in the DOM
     expect(generateBtn.compareDocumentPosition(stockName) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 })

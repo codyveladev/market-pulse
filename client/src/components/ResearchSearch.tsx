@@ -9,7 +9,7 @@ export function ResearchSearch({ onSearch }: ResearchSearchProps) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const symbol = input.trim().toUpperCase()
+    const symbol = input.replace(/\s/g, '').toUpperCase()
     if (symbol) onSearch(symbol)
   }
 
@@ -19,6 +19,7 @@ export function ResearchSearch({ onSearch }: ResearchSearchProps) {
         type="text"
         value={input}
         onChange={(e) => setInput(e.target.value)}
+        aria-label="Stock symbol"
         placeholder="Enter stock symbol (e.g. AAPL)"
         className="flex-1 px-4 py-2 rounded-lg bg-surface-raised border border-white/5 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand/50"
       />

@@ -7,7 +7,7 @@ import { PriceChart } from './PriceChart'
 import { CompanyInfo } from './CompanyInfo'
 import { ResearchNewsFeed } from './ResearchNewsFeed'
 import { FundamentalsPanel } from './FundamentalsPanel'
-import { AIAnalystCard } from './AIAnalystCard'
+import { ScoutCard } from './ScoutCard'
 import { timeAgo } from '../utils/timeAgo'
 
 export function ResearchPage() {
@@ -39,23 +39,31 @@ export function ResearchPage() {
         </div>
       )}
 
-      {data && !loading && (
+      {data && !loading && !data.overview && (
+        <div className="flex flex-col items-center justify-center py-16 text-center" data-testid="not-found">
+          <span className="text-4xl mb-3">🔍</span>
+          <h3 className="text-lg font-semibold text-gray-100 mb-1">Ticker not found</h3>
+          <p className="text-sm text-gray-500">
+            No data available for <span className="text-gray-300 font-medium">{symbol}</span>. Check the symbol and try again.
+          </p>
+        </div>
+      )}
+
+      {data && !loading && data.overview && (
         <>
-          <AIAnalystCard symbol={symbol} dataReady={data !== null} />
-          {data.overview && <StockHeader overview={data.overview} />}
+          <ScoutCard symbol={symbol} dataReady={data !== null} />
+          <StockHeader overview={data.overview} />
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2 flex flex-col gap-4">
-              {data.overview && (
-                <KeyStatsGrid overview={data.overview} financials={data.financials} />
-              )}
+              <KeyStatsGrid overview={data.overview} financials={data.financials} />
             </div>
             <div className="flex flex-col gap-4">
               <CompanyInfo profile={data.profile} />
             </div>
           </div>
 
-          {data.overview && data.overview.chartData.length > 1 && (
+          {data.overview.chartData.length > 1 && (
             <PriceChart
               chartData={data.overview.chartData}
               chartDates={data.overview.chartDates}
@@ -65,7 +73,7 @@ export function ResearchPage() {
             />
           )}
 
-          {data.fundamentals && data.overview && (
+          {data.fundamentals && (
             <FundamentalsPanel
               fundamentals={data.fundamentals}
               currentPrice={data.overview.price}

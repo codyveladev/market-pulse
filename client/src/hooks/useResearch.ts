@@ -34,7 +34,10 @@ export function useResearch(symbol: string): UseResearchResult {
     const doFetch = async () => {
       try {
         const res = await fetch(`/api/research?symbol=${encodeURIComponent(symbol)}`, { signal: controller.signal })
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        if (!res.ok) {
+          const body = await res.json().catch(() => null)
+          throw new Error(body?.error ?? `HTTP ${res.status}`)
+        }
         const json: ResearchResponse = await res.json()
         setData(json)
         setFetchedAt(json.fetchedAt ?? null)
